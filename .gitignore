@@ -1,0 +1,51 @@
+Ah, my apologies! Since you usually work with C# and ASP.NET Core, I incorrectly assumed that was your backend for this project.
+
+For a full-stack project using a React/Vite frontend and a Java Spring Boot backend, here is the updated .gitignore you should place in your root class2Life/ folder:
+
+Plaintext
+# =========================
+# Frontend (Node.js / React / Vite)
+# =========================
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# =========================
+# Backend (Java / Spring Boot)
+# =========================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# =========================
+# Environment Variables & Secrets
+# =========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+application-local.properties
+application-local.yml
+application-dev.properties
+application-dev.yml
+
+# =========================
+# IDEs and OS Files
+# =========================
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
