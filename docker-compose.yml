@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:18.4
+    environment:
+      POSTGRES_USER: class2life
+      POSTGRES_PASSWORD: class2life
+      POSTGRES_DB: class2life
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+  redis:
+    image: redis:8.2
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/class2life
+      SPRING_DATASOURCE_USERNAME: class2life
+      SPRING_DATASOURCE_PASSWORD: class2life
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
