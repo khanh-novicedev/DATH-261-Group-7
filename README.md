@@ -16,18 +16,28 @@ class2life/                     # project root (two independent apps)
 │   ├── public/
 │   │   └── favicon.svg
 │   └── src/
-│       ├── main.tsx            # ReactDOM.createRoot(...) entry
-│       ├── App.tsx             # router + layout
-│       ├── index.css
-│       ├── vite-env.d.ts
-│       ├── api/                # fetch/axios calls to the backend
-│       │   └── client.ts
-│       ├── components/         # reusable UI (Button, Card...)
-│       ├── pages/              # route-level screens (Home, Login...)
-│       ├── hooks/              # custom hooks (useAuth, useFetch...)
-│       ├── types/              # TS mirrors of your backend DTOs
-│       ├── utils/              # pure helpers
-│       └── assets/             # images, fonts
+│       ├── <ROLE> features/        # Independent domain modules
+│       │   └── dashboard/
+│       │       ├── api/            # Feature-scoped API endpoints & queries
+│       │       ├── assets/         # Feature-scoped media & static files
+│       │       ├── components/     # Feature-scoped UI components
+│       │       ├── hooks/          # Feature-scoped custom hooks
+│       │       ├── types/          # Feature-scoped TypeScript definitions
+│       │       └── index.ts        # Public API / barrel export for this feature
+│       │   ├── catalog/
+│       │   └── others/
+│       ├── routes/                 # Route guards & authentication flow
+│       │   ├── ProtectedRoute.tsx  # Guard for authenticated/authorized views
+│       │   └── PublicRoute.tsx     # Guard for public/guest-only views
+│       └── shared/                 # Project-wide reusable layer
+│           ├── api/                # Base Axios/Fetch client & global interceptors
+│           ├── assets/             # Global icons, branding, images, fonts
+│           ├── components/         # Pure UI kit (Design System primitives)
+│           ├── context/            # Global React context providers
+│           ├── hooks/              # Reusable generic utility hooks
+│           ├── layouts/            # Page shell layouts (Header, Sidebar, Footers)
+│           ├── store/              # Global state management (Zustand/Redux)
+│           └── utils/              # Pure helper functions
 │
 └── backend/                    # Java + Spring Boot + Maven
     ├── pom.xml
@@ -52,15 +62,60 @@ class2life/                     # project root (two independent apps)
 
 ## Frontend — React + Vite5 + TypeScript
 
-| Directory         | Purpose                                                 |
-| ----------------- | ------------------------------------------------------- |
-| `src/api/`        | HTTP client + endpoint calls to the Spring Boot backend |
-| `src/components/` | Reusable presentational UI (buttons, cards, inputs)     |
-| `src/pages/`      | Route-level screens wired to the router                 |
-| `src/hooks/`      | Custom hooks (`useAuth`, `useFetch`, …)                 |
-| `src/types/`      | TypeScript interfaces mirroring backend DTOs            |
-| `src/utils/`      | Pure helper functions (formatting, validation)          |
-| `src/assets/`     | Static assets: images, fonts, icons                     |
+### 1. `features/` (Domain Modules)
+
+Houses isolated business features (e.g., `auth`, `products`, `orders`, `dashboard`). Each subfolder behaves like an autonomous mini-application:
+- **`api/`**: Feature-specific endpoints, API requests (Axios/fetch callers), or query hooks (React Query / RTK Query).
+- **`assets/`**: Media files, icons, and illustrations scoped exclusively to this feature.
+- **`components/`**: Private UI components used solely within this module (e.g., `ProductFilterCard`, `OrderDetailModal`).
+- **`hooks/`**: Custom hooks encapsulating feature-specific UI and business logic.
+- **`types/`**: TypeScript interfaces, enums, and types defining the domain models for this feature.
+
+### 2. `routes/` (Access Control & Navigation)
+
+Handles routing guards and screen access policies:
+- **`ProtectedRoute.tsx`**: Route wrapper verifying authentication status and authorization roles. Redirects unauthenticated or unauthorized users to the login screen or a 403 Forbidden page.
+- **`PublicRoute.tsx`**: Route wrapper for public pages (e.g., login, registration, landing page). Automatically redirects already-authenticated users away from auth screens directly into the main application.
+### 3. `shared/` (Core Foundation & Reusables)
+
+Contains application-wide utilities, UI elements, and infrastructure code that multiple features depend on:
+- **`api/`**: Base HTTP client setup (Axios instance, base URLs, interceptors for JWT token injection and refresh logic) and global endpoints (e.g., file upload, dictionary/metadata APIs).
+- **`assets/`**: Global static assets including brand logos, favicons, fonts, and fallback images.
+- **`components/`**: Generic, design-system UI primitives with zero business logic (e.g., `Button`, `Input`, `Modal`, `Table`, `Badge`).
+- **`context/`**: Global React Context providers for lightweight cross-cutting state (e.g., `ThemeContext`, `LanguageContext`).
+- **`hooks/`**: Generic reusable utility hooks (e.g., `useDebounce`, `useLocalStorage`, `useOnClickOutside`).
+- **`layouts/`**: Page layout scaffolding (e.g., `MainLayout` with header and sidebar, `AuthLayout`, `BlankLayout`).
+- **`store/`**: Global state management configuration (Zustand, Redux Toolkit, or Pinia) for app-wide data (auth session, notifications, user preferences).
+- **`utils/`**: Pure helper functions without UI or state dependencies (e.g., date formatting, currency helpers, regex validators).
+### Dependency Rules
+
+1. **Unidirectional Dependency:** `features/` may import from `shared/`, but **`shared/` must never import from `features/`**.
+2. **Feature Isolation:** Features should not reach directly into internal files of other features. If logic or UI must be shared across features, promote it to `shared/`.               |
+
+
+| Directory / Item           | Purpose                                                       |
+| -------------------------- | ------------------------------------------------------------- |
+| **features/**              | Isolated domain modules (autonomous mini-apps).               |
+| `├─ api/`                  | Feature-specific endpoints & API calls.                       |
+| `├─ assets/`               | Feature-scoped media and icons.                               |
+| `├─ components/`           | Private UI components.                                        |
+| `├─ hooks/`                | Feature-specific logic hooks.                                 |
+| `└─ types/`                | Domain models and TS interfaces.                              |
+| **routes/**                | Access control and routing policies.                          |
+| `├─ ProtectedRoute.tsx`    | Guards for authenticated/authorized users.                    |
+| `└─ PublicRoute.tsx`       | Public routes (auto-redirects if logged in).                  |
+| **shared/**                | App-wide core foundation and reusables.                       |
+| `├─ api/`                  | Base HTTP client & global endpoints.                          |
+| `├─ assets/`               | Global static assets (logos, fonts).                          |
+| `├─ components/`           | Generic UI primitives (no business logic).                    |
+| `├─ context/`              | Global React Context providers.                               |
+| `├─ hooks/`                | Reusable utility hooks.                                       |
+| `├─ layouts/`              | Page layout scaffolding.                                      |
+| `├─ store/`                | Global state management (Zustand, Redux).                     |
+| `└─ utils/`                | Pure helper functions (formatting, validation).               |
+| **Dependency Rules**       |                                                               |
+| `1. Unidirectional`        | `features/` imports `shared/`; `shared/` never imports back.  |
+| `2. Isolation`             | Features cannot access each other. Share via `shared/`.       |
 
 ## Backend — Java 21+ Spring Boot + Maven
 
