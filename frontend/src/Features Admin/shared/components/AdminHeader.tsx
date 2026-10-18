@@ -35,7 +35,13 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Center: Menubar Navigation Tabs */}
         <nav className="hidden md:inline-flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-2xs">
           {tabs.map((tab) => {
-            const isActive = tab === activeTab;
+            const isActive =
+              tab === activeTab ||
+              (tab.startsWith('User') && activeTab.startsWith('User')) ||
+              (tab.startsWith('Course') && activeTab.startsWith('Course')) ||
+              (tab.startsWith('Forum') && activeTab.startsWith('Forum')) ||
+              (tab.startsWith('System') && activeTab.startsWith('System'));
+
             return (
               <button
                 key={tab}
