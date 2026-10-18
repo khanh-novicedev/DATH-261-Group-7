@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect, ReactNode } from 'react';
+import React from 'react';
 import { MoreHorizontal, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { Course } from '../types';
-import { SharedTableRow } from '../../shared/components/SharedTableRow';
 import { Dropdown } from '../../shared/components/Dropdown';
 
 interface CourseTableRowProps {
@@ -20,7 +19,7 @@ export const CourseTableRow: React.FC<CourseTableRowProps> = ({
   const isPublished = course.status === 'Published';
 
   return (
-    <SharedTableRow>
+    <tr className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
       {/* Course / Instructor */}
       <td className="px-6 py-4">
         <div
@@ -114,6 +113,6 @@ export const CourseTableRow: React.FC<CourseTableRowProps> = ({
           </button>
         </Dropdown>
       </td>
-    </SharedTableRow>
+    </tr>
   );
 };

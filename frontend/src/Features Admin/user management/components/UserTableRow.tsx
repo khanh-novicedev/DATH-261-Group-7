@@ -2,7 +2,6 @@ import React from 'react';
 import { MoreVertical, Eye, UserCheck, UserX } from 'lucide-react';
 import { User } from '../types';
 import { StatusBadge } from './StatusBadge';
-import { SharedTableRow } from '../../shared/components/SharedTableRow';
 import { Dropdown } from '../../shared/components/Dropdown';
 
 interface UserTableRowProps {
@@ -19,7 +18,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
   const isSuspended = user.status === 'Suspended';
 
   return (
-    <SharedTableRow>
+    <tr className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
       {/* Avatar & Name */}
       <td className="px-6 py-4">
         <div
@@ -87,6 +86,6 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
           </button>
         </Dropdown>
       </td>
-    </SharedTableRow>
+    </tr>
   );
 };

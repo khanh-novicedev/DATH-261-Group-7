@@ -1,23 +1,11 @@
 import React from 'react';
 
-/**
- * Generic reusable table component used by both Course and User management pages.
- * It renders a <table> with a supplied header and a list of rows rendered via `renderRow`.
- * The component is intentionally lightweight – it only handles the surrounding layout,
- * empty‑state handling and basic styling (Tailwind) that is shared across the two pages.
- */
 export interface SharedTableProps<T> {
-  /** Array of items to render as rows */
   items: T[];
-  /** Render a single row given an item */
   renderRow: (item: T) => React.ReactNode;
-  /** Header JSX (usually a <tr> with <th> cells) */
-  header: React.ReactNode;
-  /** Message shown when `items` is empty */
+  header: string[];
   emptyMessage: string;
-  /** Number of columns for the empty‑state <td> (colSpan) */
   colSpan: number;
-  /** Additional Tailwind classes for the outer wrapper div */
   wrapperClassName?: string;
 }
 
@@ -34,11 +22,18 @@ export const SharedTable = <T,>(props: SharedTableProps<T>) => {
   return (
     <div className={wrapperClassName}>
       <table className="w-full text-left border-collapse min-w-37.5">
-        <thead>{header}</thead>
+        <thead>
+          <tr className="bg-slate-50/80 border-b border-slate-200">
+            {header.map((col) => (
+              <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                {col}
+              </th>
+            ))}
+          </tr>
+        </thead>
         <tbody className="divide-y divide-slate-100">
           {items.length > 0 ? (
             items.map((item, idx) => (
-              // Row components already provide a unique key prop
               <React.Fragment key={idx}>{renderRow(item)}</React.Fragment>
             ))
           ) : (

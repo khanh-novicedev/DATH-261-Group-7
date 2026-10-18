@@ -8,14 +8,15 @@ interface AdminHeaderProps {
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({
-  activeTab = 'User Manager',
+  activeTab = 'User Management',
   onTabChange,
 }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const tabs = [
-    'User Manager',
-    'Course Manager',
+    'User Management',
+    'Course Management',
+    'Audit Logs',
     'Forum Manager',
     'System Setting',
   ];

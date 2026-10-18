@@ -31,24 +31,7 @@ export const CourseTable: React.FC<CourseTableProps> = ({
           onDelete={onDelete}
         />
       )}
-      header={(
-        <thead>
-          <tr className="bg-slate-50/80 border-b border-slate-200">
-            <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Course / Instructor
-            </th>
-            <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Enrolments
-            </th>
-            <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Completion
-            </th>
-            <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">
-              Actions
-            </th>
-          </tr>
-        </thead>
-      )}
+      header={["Course / Instructor", "Enrolments", "Completion", "Actions"]}
       emptyMessage="No courses found matching your criteria."
       colSpan={4}
     />

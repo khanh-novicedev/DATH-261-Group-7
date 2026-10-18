@@ -13,7 +13,7 @@ interface UserManagementPageProps {
 export const UserManagementPage: React.FC<UserManagementPageProps> = ({
   onTabChange,
 }) => {
-  const [currentTab, setCurrentTab] = useState('User Manager');
+  const [currentTab, setCurrentTab] = useState('User Management');
 
   const {
     filteredUsers,

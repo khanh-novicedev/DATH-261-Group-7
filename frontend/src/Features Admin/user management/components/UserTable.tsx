@@ -9,9 +9,6 @@ interface UserTableProps {
   onToggleStatus: (user: User) => void;
 }
 
-/**
- * UserTable now uses the generic SharedTable component.
- */
 export const UserTable: React.FC<UserTableProps> = ({
   users,
   onViewDetail,
@@ -28,30 +25,7 @@ export const UserTable: React.FC<UserTableProps> = ({
           onToggleStatus={onToggleStatus}
         />
       )}
-      header={(
-        <thead>
-          <tr className="bg-slate-50/80 border-b border-slate-200">
-            <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Avatar &amp; Name
-            </th>
-            <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Email
-            </th>
-            <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Role
-            </th>
-            <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Joined Date
-            </th>
-            <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Account Status
-            </th>
-            <th className="px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">
-              Actions
-            </th>
-          </tr>
-        </thead>
-      )}
+      header={["Avatar & Name", "Email", "Role", "Joined Date", "Account Status", "Actions"]}
       emptyMessage="No users found matching your filters."
       colSpan={6}
     />

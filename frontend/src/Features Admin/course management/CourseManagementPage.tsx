@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { AdminHeader } from './components/AdminHeader';
+import { AdminHeader } from '../shared/components/AdminHeader';
 import { CourseMetrics } from './components/CourseMetrics';
 import { CourseFilters } from './components/CourseFilters';
 import { CourseTable } from './components/CourseTable';
