@@ -66,4 +66,7 @@ public class Lesson {
 
     public String getContentUrl() { return contentUrl; }
     public void setContentUrl(String contentUrl) { this.contentUrl = contentUrl; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }
