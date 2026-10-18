@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MoreVertical, Eye, UserX, UserCheck } from 'lucide-react';
+import React from 'react';
+import { MoreVertical, Eye, UserCheck, UserX } from 'lucide-react';
 import { User } from '../types';
 import { StatusBadge } from './StatusBadge';
+import { SharedTableRow } from '../../shared/components/SharedTableRow';
+import { Dropdown } from '../../shared/components/Dropdown';
 
 interface UserTableRowProps {
   user: User;
@@ -14,24 +16,10 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
   onViewDetail,
   onToggleStatus,
 }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close menu on outside click
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const isSuspended = user.status === 'Suspended';
 
   return (
-    <tr className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
+    <SharedTableRow>
       {/* Avatar & Name */}
       <td className="px-6 py-4">
         <div
@@ -56,80 +44,49 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
       </td>
 
       {/* Email */}
-      <td className="px-6 py-4 text-sm text-slate-600">
-        {user.email}
-      </td>
+      <td className="px-6 py-4 text-sm text-slate-600">{user.email}</td>
 
       {/* Role */}
-      <td className="px-6 py-4 text-sm text-slate-600">
-        {user.role}
-      </td>
+      <td className="px-6 py-4 text-sm text-slate-600">{user.role}</td>
 
       {/* Joined Date */}
-      <td className="px-6 py-4 text-sm text-slate-600">
-        {user.joinedDate}
-      </td>
+      <td className="px-6 py-4 text-sm text-slate-600">{user.joinedDate}</td>
 
       {/* Account Status */}
-      <td className="px-6 py-4">
-        <StatusBadge status={user.status} />
-      </td>
+      <td className="px-6 py-4"><StatusBadge status={user.status} /></td>
 
       {/* Actions */}
       <td className="px-6 py-4 text-right">
-        <div className="relative inline-block" ref={menuRef}>
+        <Dropdown trigger={<MoreVertical className="w-4 h-4" />}>
           <button
             type="button"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            aria-label="User actions"
-            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+            onClick={() => onViewDetail(user)}
+            className="w-full text-left px-3.5 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
           >
-            <MoreVertical className="w-4 h-4" />
+            <Eye className="w-4 h-4 text-slate-500" />
+            <span>View Detail</span>
           </button>
-
-          {/* Action Dropdown Menu */}
-          {menuOpen && (
-            <div className="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-30 animate-in fade-in slide-in-from-top-1 duration-150 text-left">
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  onViewDetail(user);
-                }}
-                className="w-full text-left px-3.5 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
-              >
-                <Eye className="w-4 h-4 text-slate-500" />
-                View Detail
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  onToggleStatus(user);
-                }}
-                className={`w-full text-left px-3.5 py-2 text-sm flex items-center gap-2.5 transition-colors cursor-pointer ${
-                  isSuspended
-                    ? 'text-green-700 hover:bg-green-50'
-                    : 'text-red-600 hover:bg-red-50'
-                }`}
-              >
-                {isSuspended ? (
-                  <>
-                    <UserCheck className="w-4 h-4 text-green-600" />
-                    Activate Account
-                  </>
-                ) : (
-                  <>
-                    <UserX className="w-4 h-4 text-red-500" />
-                    Suspend Account
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-        </div>
+          <button
+            type="button"
+            onClick={() => onToggleStatus(user)}
+            className={`w-full text-left px-3.5 py-2 text-sm flex items-center gap-2.5 transition-colors cursor-pointer ${
+              isSuspended ? 'text-green-700 hover:bg-green-50' : 'text-red-600 hover:bg-red-50'
+            }`}
+          >
+            {isSuspended ? (
+              <>
+                <UserCheck className="w-4 h-4 text-green-600" />
+                <span>Activate Account</span>
+              </>
+            ) : (
+              <>
+                <UserX className="w-4 h-4 text-red-500" />
+                <span>Suspend Account</span>
+              </>
+            )}
+          </button>
+        </Dropdown>
       </td>
-    </tr>
+    </SharedTableRow>
   );
 };

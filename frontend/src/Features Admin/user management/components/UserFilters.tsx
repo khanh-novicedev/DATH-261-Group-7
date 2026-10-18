@@ -58,7 +58,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
               setRoleOpen((prev) => !prev);
               setStatusOpen(false);
             }}
-            className="h-10 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 flex items-center justify-between gap-3 min-w-[140px] shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+            className="h-10 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 flex items-center justify-between gap-3 min-w-35 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
           >
             <span>Role: {filters.role}</span>
             <ChevronDown
@@ -98,7 +98,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
               setStatusOpen((prev) => !prev);
               setRoleOpen(false);
             }}
-            className="h-10 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 flex items-center justify-between gap-3 min-w-[140px] shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+            className="h-10 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 flex items-center justify-between gap-3 min-w-35 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
           >
             <span>Status: {filters.status}</span>
             <ChevronDown

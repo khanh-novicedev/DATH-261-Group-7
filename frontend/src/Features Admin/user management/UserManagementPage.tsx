@@ -6,7 +6,13 @@ import { UserDetail } from './components/UserDetail';
 import { ConfirmModal } from './components/ConfirmModal';
 import { useUserManagement } from './hooks/useUserManagement';
 
-export const UserManagementPage: React.FC = () => {
+interface UserManagementPageProps {
+  onTabChange?: (tab: string) => void;
+}
+
+export const UserManagementPage: React.FC<UserManagementPageProps> = ({
+  onTabChange,
+}) => {
   const [currentTab, setCurrentTab] = useState('User Manager');
 
   const {
@@ -22,10 +28,15 @@ export const UserManagementPage: React.FC = () => {
     setIsModalOpen,
   } = useUserManagement();
 
+  const handleHeaderTabChange = (tab: string) => {
+    setCurrentTab(tab);
+    onTabChange?.(tab);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col font-sans">
       {/* Top Navigation Bar */}
-      <AdminHeader activeTab={currentTab} onTabChange={setCurrentTab} />
+      <AdminHeader activeTab={currentTab} onTabChange={handleHeaderTabChange} />
 
       {/* Main Page Content */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
