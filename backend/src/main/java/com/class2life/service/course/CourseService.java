@@ -71,9 +71,13 @@ public class CourseService {
     public PageResponse<CourseCatalogResponse> getCourseCatalog(String keyword, String category, int page, int size) {
         // Tạo đối tượng phân trang (page trong Spring bắt đầu từ 0)
         var pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        
+        // A null parameter inside LOWER(CONCAT(...)) cannot be typed by PostgreSQL,
+        // so an empty keyword is used instead; '%%' matches every title.
+        String normalizedKeyword = (keyword == null || keyword.isBlank()) ? "" : keyword.trim();
 
         // Tạm thời fix cứng lọc trạng thái PUBLISHED cho học viên (chưa áp dụng phân quyền RBAC)
-        var coursePage = courseRepository.findCoursesByFilters(keyword, category, CourseStatus.PUBLISHED, pageable);
+        var coursePage = courseRepository.findCoursesByFilters(normalizedKeyword, category, CourseStatus.PUBLISHED, pageable);
 
         // Chuyển đổi từ Entity sang DTO Catalog
         var items = coursePage.getContent().stream()
@@ -127,7 +131,7 @@ public class CourseService {
         course.setTitle(request.title());
         course.setDescription(request.description());
         course.setCategory(request.category());
-        course.setPrerequisites(request.prerequisites());
+        // course.setPrerequisites(request.prerequisites());
         Course updatedCourse = courseRepository.save(course);
 
         // 3. Lấy danh sách bài học cũ từ DB
@@ -182,7 +186,7 @@ public class CourseService {
     @Transactional
     public CourseResponse changeCourseStatus(UUID courseId, CourseStatus newStatus) {
         Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found")); // TODO: Ném lỗi 404
+                .orElseThrow(() -> new RuntimeException("Course not found")); // Ném lỗi 404
 
         // Kiểm tra phân quyền Owner hoặc Admin
 

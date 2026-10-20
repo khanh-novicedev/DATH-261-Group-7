@@ -35,7 +35,7 @@ public class CourseMapper {
                 course.getTitle(),
                 course.getDescription(),
                 course.getCategory(),
-                course.getPrerequisites(),
+                null, // course.getPrerequisites(),
                 course.getStatus(),
                 lessonResponses,
                 course.getCreatedAt(),

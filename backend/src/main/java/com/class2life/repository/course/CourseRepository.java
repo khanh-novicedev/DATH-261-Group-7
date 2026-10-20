@@ -13,9 +13,9 @@ import java.util.UUID;
 public interface CourseRepository extends JpaRepository<Course, UUID> {
     // Viết câu lệnh JPQL để tìm kiếm và phân trang
     @Query("SELECT c FROM Course c WHERE " +
-           "(:keyword IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
+           "LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')) AND " +
            "(:category IS NULL OR c.category = :category) AND " +
-           "(:status IS NULL OR c.status = :status)")
+           "c.status = :status")
     Page<Course> findCoursesByFilters(
             @Param("keyword") String keyword,
             @Param("category") String category,
