@@ -31,6 +31,9 @@ public class Course {
     @Column(name = "category")
     private String category;
 
+    @Column(name = "prerequisites", columnDefinition = "text")
+    private String prerequisites;
+
     // Map với native Postgres enum course_status, có giá trị mặc định là DRAFT
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
@@ -63,6 +66,9 @@ public class Course {
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+    public String getPrerequisites() { return prerequisites; }
+    public void setPrerequisites(String prerequisites) { this.prerequisites = prerequisites; }
 
     public CourseStatus getStatus() { return status; }
     public void setStatus(CourseStatus status) { this.status = status; }

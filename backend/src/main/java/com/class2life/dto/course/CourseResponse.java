@@ -11,6 +11,7 @@ public record CourseResponse(
         String title,
         String description,
         String category,
+        String prerequisites,
         CourseStatus status,
         List<LessonResponse> lessons,
         LocalDateTime createdAt,

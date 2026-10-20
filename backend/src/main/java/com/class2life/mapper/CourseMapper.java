@@ -12,35 +12,39 @@ import java.util.stream.Collectors;
 @Component
 public class CourseMapper {
 
-    // Chuyển đổi từ Lesson Entity sang LessonResponse DTO
-    public LessonResponse toLessonResponse(Lesson lesson) {
+    public LessonResponse toLessonResponse(Lesson lesson, boolean isFullView) {
         return new LessonResponse(
                 lesson.getId(),
                 lesson.getSequenceNumber(),
                 lesson.getTitle(),
                 lesson.getType(),
-                lesson.getContentUrl(),
+                isFullView ? lesson.getContentUrl() : null, // Ẩn URL nếu không có quyền
                 lesson.getCreatedAt(),
                 lesson.getUpdatedAt()
         );
     }
 
-    // Chuyển đổi từ Course Entity sang CourseResponse DTO (bao gồm cả danh sách bài học)
-    public CourseResponse toCourseResponse(Course course, List<Lesson> lessons) {
+    public CourseResponse toCourseResponse(Course course, List<Lesson> lessons, boolean isFullView) {
         List<LessonResponse> lessonResponses = lessons.stream()
-                .map(this::toLessonResponse)
+                .map(l -> toLessonResponse(l, isFullView))
                 .collect(Collectors.toList());
 
         return new CourseResponse(
                 course.getId(),
-                null, // course.getInstructor().getId() khi Leader đã push User.java
+                null, // course.getInstructor().getId()
                 course.getTitle(),
                 course.getDescription(),
                 course.getCategory(),
+                course.getPrerequisites(),
                 course.getStatus(),
                 lessonResponses,
                 course.getCreatedAt(),
                 course.getUpdatedAt()
         );
+    }
+
+    // Giữ lại hàm cũ cho createCourse (Mặc định Full View)
+    public CourseResponse toCourseResponse(Course course, List<Lesson> lessons) {
+        return toCourseResponse(course, lessons, true);
     }
 }
