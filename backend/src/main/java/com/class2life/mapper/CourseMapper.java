@@ -2,8 +2,8 @@ package com.class2life.mapper;
 
 import com.class2life.dto.course.CourseResponse;
 import com.class2life.dto.course.LessonResponse;
-import com.class2life.entity.Course;
-import com.class2life.entity.Lesson;
+import com.class2life.entity.course.Course;
+import com.class2life.entity.course.Lesson;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -35,7 +35,7 @@ public class CourseMapper {
                 course.getTitle(),
                 course.getDescription(),
                 course.getCategory(),
-                null, // course.getPrerequisites(),
+//                null, // course.getPrerequisites(),
                 course.getStatus(),
                 lessonResponses,
                 course.getCreatedAt(),

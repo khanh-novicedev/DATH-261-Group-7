@@ -1,6 +1,6 @@
 package com.class2life.dto.course;
 
-import com.class2life.entity.LessonType;
+import com.class2life.entity.course.LessonType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;

@@ -1,6 +1,6 @@
 package com.class2life.repository.assessment;
 
-import com.class2life.entity.QuizOption;
+import com.class2life.entity.assessment.QuizOption;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

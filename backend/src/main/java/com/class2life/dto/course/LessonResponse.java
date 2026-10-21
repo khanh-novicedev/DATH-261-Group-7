@@ -1,6 +1,6 @@
 package com.class2life.dto.course;
 
-import com.class2life.entity.LessonType;
+import com.class2life.entity.course.LessonType;
 import java.time.LocalDateTime;
 import java.util.UUID;
 

@@ -1,6 +1,6 @@
 package com.class2life.repository.assessment;
 
-import com.class2life.entity.QuizAttempt;
+import com.class2life.entity.assessment.QuizAttempt;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

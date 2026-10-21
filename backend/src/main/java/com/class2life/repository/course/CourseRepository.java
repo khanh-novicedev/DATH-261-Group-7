@@ -1,7 +1,7 @@
 package com.class2life.repository.course;
 
-import com.class2life.entity.Course;
-import com.class2life.entity.CourseStatus;
+import com.class2life.entity.course.Course;
+import com.class2life.entity.course.CourseStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

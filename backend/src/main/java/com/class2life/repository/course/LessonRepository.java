@@ -1,6 +1,6 @@
 package com.class2life.repository.course;
 
-import com.class2life.entity.Lesson;
+import com.class2life.entity.course.Lesson;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.UUID;
 import java.util.List;
