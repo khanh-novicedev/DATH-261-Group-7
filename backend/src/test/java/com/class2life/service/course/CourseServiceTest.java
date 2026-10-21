@@ -26,11 +26,11 @@ import com.class2life.common.PageResponse;
 import com.class2life.dto.course.CourseCatalogResponse;
 import com.class2life.dto.course.CourseResponse;
 import com.class2life.dto.course.CreateCourseRequest;
-import com.class2life.entity.Course;
-import com.class2life.entity.CourseStatus;
+import com.class2life.entity.course.Course;
+import com.class2life.entity.course.CourseStatus;
 import com.class2life.mapper.CourseMapper;
 import com.class2life.repository.course.CourseRepository;
-import com.class2life.entity.Lesson;
+import com.class2life.entity.course.Lesson;
 import com.class2life.repository.course.LessonRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,7 +67,7 @@ class CourseServiceTest {
                 "Presentation Skills",
                 "Course description",
                 "Soft Skills",
-                null, // Thêm dòng null này cho trường prerequisites mới
+//                null, // Thêm dòng null này cho trường prerequisites mới
                 CourseStatus.DRAFT,
                 new ArrayList<>(),
                 null,
@@ -137,7 +137,7 @@ class CourseServiceTest {
 
         // Giả lập hộp đồ ăn mà Mapper sẽ trả về (đã giấu URL thành null)
         CourseResponse mockResponse = new CourseResponse(
-                courseId, null, "Public Course", null, null, null, CourseStatus.PUBLISHED,
+                courseId, null, "Public Course", null, null, CourseStatus.PUBLISHED,
                 List.of(new com.class2life.dto.course.LessonResponse(
                         mockLesson.getId(), 1, "Secret Lesson", null, null, null, null)),
                 null, null

@@ -1,5 +1,5 @@
 package com.class2life.service.interaction;
-import com.class2life.entity.NotificationType;
+import com.class2life.entity.interaction.NotificationType;
 import org.springframework.stereotype.Service;
 import java.util.UUID;
 

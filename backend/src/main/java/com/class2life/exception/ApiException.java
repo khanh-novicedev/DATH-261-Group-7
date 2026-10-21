@@ -1,7 +1,5 @@
 package com.class2life.exception;
 
-import lombok.Getter;
-@Getter
 public class ApiException extends RuntimeException {
     private final ErrorCode errorCode;
 
@@ -12,5 +10,7 @@ public class ApiException extends RuntimeException {
         super(message);
         this.errorCode = errorCode;
     }
-
+    public ErrorCode getErrorCode(){
+        return this.errorCode;
+    }
 }
