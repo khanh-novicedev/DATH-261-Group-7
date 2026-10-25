@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { TeacherDashboardPage } from "../Features Teacher/teacher-dashboard";
 import { ProfilePage } from "../Shared/components/ProfilePage";
+import { StudentRoutes } from "./StudentRoutes";
 
 export function AppRoutes() {
   return (
@@ -9,6 +10,8 @@ export function AppRoutes() {
 
       {/* Shared profile page for every user role */}
       <Route path="/profile" element={<ProfilePage />} />
+
+      <Route path="/student/*" element={<StudentRoutes />} />
 
       {/* Teacher pages */}
       <Route path="/teacher/*" element={<TeacherDashboardPage />} />
