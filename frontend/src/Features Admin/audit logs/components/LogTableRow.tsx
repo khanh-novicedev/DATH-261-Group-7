@@ -17,10 +17,7 @@ export const LogTableRow: React.FC<LogTableRowProps> = ({
       
       {/* Avatar & Name */}
       <td>
-        <div
-          className="flex items-center gap-3 cursor-pointer group"
-          // onClick={() => onViewDetail(log)}
-        >
+        <div className="flex items-center gap-3 cursor-pointer group">
           {log.actorAvatarUrl ? (
             <img
               src={log.actorAvatarUrl}

@@ -16,9 +16,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const tabs = [
     'User Management',
     'Course Management',
+    'Report Management',
     'Audit Logs',
-    'Forum Manager',
-    'System Setting',
   ];
 
   return (
@@ -40,8 +39,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               tab === activeTab ||
               (tab.startsWith('User') && activeTab.startsWith('User')) ||
               (tab.startsWith('Course') && activeTab.startsWith('Course')) ||
-              (tab.startsWith('Forum') && activeTab.startsWith('Forum')) ||
-              (tab.startsWith('System') && activeTab.startsWith('System'));
+              (tab.startsWith('Report') && activeTab.startsWith('Report')) ||
+              (tab.startsWith('Audit') && activeTab.startsWith('Audit'));
 
             return (
               <button

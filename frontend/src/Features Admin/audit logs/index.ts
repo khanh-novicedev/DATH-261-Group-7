@@ -1,4 +1,4 @@
-export { UserManagementPage, default } from './AuditLogsPage';
+export { AuditLogsPage, default } from './AuditLogsPage';
 export * from './types';
 export * from '../shared/components/AdminHeader';
 export * from './components/LogTable';

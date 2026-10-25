@@ -3,11 +3,6 @@ import { FilterState, Log } from '../types';
 import { initialLogs } from '../api/mockData';
 
 export const useAduditLogs = () => {
-  // const [users, setUsers] = useState<User[]>(initialUsers);
-  // const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  // const [userToToggle, setUserToToggle] = useState<User | null>(null);
-  // const [isModalOpen, setIsModalOpen] = useState(false);
-  
   const [logs] = useState<Log[]>(initialLogs);
 
   const [filters, setFilters] = useState<FilterState>({
@@ -50,13 +45,6 @@ export const useAduditLogs = () => {
     logs,
     filteredLogs,
     filters,
-    // selectedUser,
-    // userToToggle,
-    // isModalOpen,
     handleFilterChange,
-    // setSelectedUser,
-    // promptToggleStatus,
-    // confirmToggleStatus,
-    // setIsModalOpen,
   };
 };

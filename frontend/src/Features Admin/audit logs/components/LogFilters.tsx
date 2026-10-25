@@ -14,8 +14,8 @@ export const LogFilters: React.FC<LogFiltersProps> = ({
   const [roleOpen, setRoleOpen] = useState(false);
   const [actionOpen, setActionOpen] = useState(false);
 
-  const roleRef = useRef<HTMLDivElement>(null); //NOTE: Có ý nghĩa gì
-  const actionRef = useRef<HTMLDivElement>(null); //NOTE: Có ý nghĩa gì
+  const roleRef = useRef<HTMLDivElement>(null);
+  const actionRef = useRef<HTMLDivElement>(null);
 
   // Close dropdowns on outside click
   useEffect(() => {
