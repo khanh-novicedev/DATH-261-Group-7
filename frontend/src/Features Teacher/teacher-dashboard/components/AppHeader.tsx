@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronDownIcon } from "./Icons";
 
 interface AppHeaderProps {
@@ -15,10 +17,12 @@ export function AppHeader({
   onMyCourses,
   onQAReports,
 }: AppHeaderProps) {
+  const navigate = useNavigate();
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
   return (
     <header className="td-header">
       <div className="td-header__inner">
-        {/* Logo placeholder: the Figma frame has a blank 180x50 box here. */}
         <div className="td-logo" aria-hidden="true" />
 
         <nav className="td-menubar" aria-label="Main">
@@ -30,6 +34,7 @@ export function AppHeader({
           >
             Dashboard
           </button>
+
           <button
             type="button"
             className={`td-menubar__item${active === "courses" ? " is-active" : ""}`}
@@ -38,6 +43,7 @@ export function AppHeader({
           >
             My Courses
           </button>
+
           <button
             type="button"
             className={`td-menubar__item${active === "qa-reports" ? " is-active" : ""}`}
@@ -48,12 +54,38 @@ export function AppHeader({
           </button>
         </nav>
 
-        <div className="td-user">
-          <span className="td-avatar" aria-hidden="true">
-            {userName.charAt(0).toUpperCase()}
-          </span>
-          <span className="td-user__name">{userName}</span>
-          <ChevronDownIcon size={12} aria-hidden="true" />
+        <div className="td-user td-user--menu">
+          <button
+            type="button"
+            className="td-user__trigger"
+            aria-haspopup="menu"
+            aria-expanded={profileMenuOpen}
+            onClick={() => setProfileMenuOpen((open) => !open)}
+          >
+            <span className="td-avatar" aria-hidden="true">
+              {userName.charAt(0).toUpperCase()}
+            </span>
+
+            <span className="td-user__name">{userName}</span>
+            <ChevronDownIcon size={12} aria-hidden="true" />
+          </button>
+
+          {profileMenuOpen && (
+            <div className="td-user__dropdown" role="menu">
+              <button
+                type="button"
+                className="td-user__dropdown-item"
+                role="menuitem"
+                onClick={() => {
+                  setProfileMenuOpen(false);
+                  navigate("/profile");
+                }}
+              >
+                <span aria-hidden="true">👤</span>
+                <span>My Profile</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
