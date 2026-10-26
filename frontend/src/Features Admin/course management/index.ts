@@ -1,0 +1,11 @@
+export { CourseManagementPage, default } from './CourseManagementPage';
+export * from './types';
+export * from './components/AdminHeader';
+export * from './components/CourseMetrics';
+export * from './components/CourseFilters';
+export * from './components/CourseTable';
+export * from './components/CourseTableRow';
+export * from './components/CoursePreview';
+export * from './components/AddCourseModal';
+export * from './components/DeleteCourseModal';
+export * from './hooks/useCourseManagement';

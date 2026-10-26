@@ -1,0 +1,10 @@
+export { UserManagementPage, default } from './UserManagementPage';
+export * from './types';
+export * from '../shared/components/AdminHeader';
+export * from './components/UserTable';
+export * from './components/UserTableRow';
+export * from './components/UserFilters';
+export * from './components/UserDetail';
+export * from './components/StatusBadge';
+export * from './components/ConfirmModal';
+export * from './hooks/useUserManagement';
