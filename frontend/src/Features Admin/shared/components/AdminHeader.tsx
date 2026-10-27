@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronDown, LogOut, Settings, User as UserIcon } from 'lucide-react';
 import defaultAvatar from '../../../Shared/assets/avatar.png';
 
@@ -25,11 +26,14 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Left: Brand / Logo */}
         <div className="flex items-center gap-3">
-          <div className="h-9 px-3 rounded-md bg-white border border-slate-200 flex items-center justify-center shadow-2xs">
+          <Link
+            to="/admin/users"
+            className="h-9 px-3 rounded-md bg-white border border-slate-200 flex items-center justify-center shadow-2xs hover:bg-slate-50 transition-colors"
+          >
             <span className="text-sm font-bold tracking-tight text-slate-800">
               LMS<span className="text-blue-600">.Admin</span>
             </span>
-          </div>
+          </Link>
         </div>
 
         {/* Center: Menubar Navigation Tabs */}
@@ -84,14 +88,14 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 <p className="text-sm font-semibold text-slate-900">Admin User</p>
                 <p className="text-xs text-slate-500 truncate">admin@university.edu</p>
               </div>
-              <button
-                type="button"
+              <Link
+                to="/profile"
                 onClick={() => setUserMenuOpen(false)}
                 className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
               >
                 <UserIcon className="w-4 h-4 text-slate-500" />
                 Profile
-              </button>
+              </Link>
               <button
                 type="button"
                 onClick={() => setUserMenuOpen(false)}

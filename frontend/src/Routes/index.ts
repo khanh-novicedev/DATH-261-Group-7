@@ -1,0 +1,6 @@
+export * from './AppRoutes'
+export * from './StudentRoutes'
+export * from './TeacherRoutes'
+export * from './AdminRoutes'
+export * from './ProtectedRoute'
+export * from './PublicRoute'

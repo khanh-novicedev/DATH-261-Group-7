@@ -8,7 +8,10 @@ export default defineConfig({
     alias: {
       '@shared': '/src/Shared',
       '@student': '/src/Features Student',
-      '@routes': '/src/routes',
+      '@teacher': '/src/Features Teacher',
+      '@admin': '/src/Features Admin',
+      '@common': '/src/Common Pages',
+      '@routes': '/src/Routes',
     },
   },
 })
