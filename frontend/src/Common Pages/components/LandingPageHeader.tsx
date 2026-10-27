@@ -16,7 +16,7 @@ export const CommonHeader: React.FC<HeaderProps> = () => {
         {/* Left: Brand / Logo */}
         <div className="flex items-center gap-3">
           <Link
-            to="/admin/users"
+            to="/landing"
             className="h-9 px-3 rounded-md bg-white border border-slate-200 flex items-center justify-center shadow-2xs hover:bg-slate-50 transition-colors"
           >
             <span className="text-sm font-bold tracking-tight text-slate-800">

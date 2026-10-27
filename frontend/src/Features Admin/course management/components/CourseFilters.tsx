@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 import { CourseFilterState, CourseStatus } from '../types';
 import { SearchBar } from '../../shared/components/SearchBar';
 import { Dropdown } from '../../shared/components/Dropdown';
@@ -14,7 +14,6 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
   onFilterChange,
 }) => {
   const statuses: ('All' | CourseStatus)[] = ['All', 'Published', 'Hidden', 'Draft'];
-  const visibilities: ('All' | CourseStatus)[] = ['All', 'Published', 'Hidden', 'Draft'];
 
   return (
     <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
