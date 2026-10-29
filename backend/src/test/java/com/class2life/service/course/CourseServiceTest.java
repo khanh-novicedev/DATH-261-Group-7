@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +22,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+
+import org.junit.jupiter.api.AfterEach;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.class2life.entity.user.User;
+import com.class2life.repository.user.UserRepository;
 
 import com.class2life.common.PageResponse;
 import com.class2life.dto.course.CourseCatalogResponse;
@@ -37,6 +45,9 @@ import com.class2life.repository.course.LessonRepository;
 class CourseServiceTest {
     @Mock
     private CourseRepository courseRepository;
+
+    @Mock // just added
+    private UserRepository userRepository;
 
     @Mock
     private LessonRepository lessonRepository;
@@ -76,6 +87,27 @@ class CourseServiceTest {
 
         when(courseRepository.save(any(Course.class))).thenReturn(mockSavedCourse);
         when(courseMapper.toCourseResponse(any(Course.class), anyList())).thenReturn(mockResponse);
+
+
+        //------------
+
+        String email = "instructor@class2life.com";
+        User instructor = new User();
+        instructor.setEmail(email);
+
+        SecurityContextHolder.getContext().setAuthentication(
+        new UsernamePasswordAuthenticationToken(
+                email,
+                null,
+                java.util.Collections.emptyList()
+        )
+        );
+
+        when(userRepository.findByEmail(email))
+        .thenReturn(Optional.of(instructor));
+
+        //------------
+
 
         CourseResponse result = courseService.createCourse(request);
 
@@ -161,4 +193,9 @@ class CourseServiceTest {
         // Dòng quyết định: Đảm bảo Service đã ra lệnh giấu URL (isFullView = false) cho Mapper
         verify(courseMapper, times(1)).toCourseResponse(any(Course.class), anyList(), eq(false));
     }
+
+    @AfterEach
+        void clearSecurityContext() {
+    SecurityContextHolder.clearContext();
+        }
 }
