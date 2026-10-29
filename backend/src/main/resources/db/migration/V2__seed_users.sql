@@ -1,0 +1,3 @@
+INSERT INTO app_users (full_name, email, password_hash, role) VALUES
+                                                                  ('Admin User',   'admin@class2life.com',   '$2a$10$QdpQCUj6Er0cgRPDcD3VQum1FDgM4qsLAqAwlXbmOJlnaDk73ICVW', 'ADMIN'),
+                                                                  ('Learner User', 'learner@class2life.com', '$2a$10$Ij/wN6Gm8XGN64t8I7X5FeV9sY.KPyqbrXRiC.7PWUtGaCoDfu1Ge', 'LEARNER');

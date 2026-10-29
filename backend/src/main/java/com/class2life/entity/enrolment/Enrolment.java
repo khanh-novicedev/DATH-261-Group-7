@@ -1,4 +1,7 @@
 package com.class2life.entity.enrolment;
+import com.class2life.entity.course.Course;
+import com.class2life.entity.course.Lesson;
+import com.class2life.entity.user.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -16,30 +19,25 @@ public class Enrolment {
       @Column(name = "id", nullable = false)
       private UUID id;
 
-      /* 
 
       @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "user_id", nullable = false)
       private User user;
       
-      @ManyToOne(fetch = fetch.LAZY)
+      @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "course_id", nullable = false)
       private Course course; 
-      
-      */
+
 
       @Enumerated(EnumType.STRING)
       @JdbcTypeCode(SqlTypes.NAMED_ENUM)
       @Column(name = "completion_status", nullable = false)
       private CompletionStatus completionStatus = CompletionStatus.IN_PROGRESS;
 
-      /*
-      
       @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "last_position_lesson_id")
       private Lesson lastPositionLesson;
 
-      */
 
       @CreationTimestamp 
       @Column(name = "enrolled_at", nullable = false, updatable = false)
@@ -78,7 +76,6 @@ public class Enrolment {
             this.enrolledAt = enrolledAt;
       }
 
-      /*
       
       public User getUser() {
             return user;      
@@ -104,6 +101,5 @@ public class Enrolment {
             this.lastPositionLesson = lastPositionLesson;
       }
 
-      */
 
 }
