@@ -4,6 +4,8 @@ import com.class2life.common.ApiResponse;
 import com.class2life.exception.ErrorCode;
 import com.class2life.security.JwtAuthenticationFiller;
 import com.class2life.security.JwtService;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.cors.CorsConfigurationSource;
 import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,14 +33,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, ObjectMapper objectMapper, CorsConfigurationSource corsConfigurationSource) throws Exception {
         JwtAuthenticationFiller jwtAuthenticationFiller = new JwtAuthenticationFiller(jwtService);
 
         http.csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/courses/*/enrolment").hasRole("LEARNER") // Enrol in course
+                        .requestMatchers(HttpMethod.POST, "/api/courses", "/api/courses/**").hasAnyRole("ADMIN", "INSTRUCTOR") // Create course
+                        .requestMatchers(HttpMethod.PATCH, "/api/courses/**").hasAnyRole("ADMIN", "INSTRUCTOR") // Publish/status
+                        .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasAnyRole("ADMIN", "INSTRUCTOR") // Delete
+                        .requestMatchers(HttpMethod.GET, "/api/courses/**").authenticated()
+                        .requestMatchers("/api/enrolments", "/api/enrolments/**").hasRole("LEARNER")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint(objectMapper))
