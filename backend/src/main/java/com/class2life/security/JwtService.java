@@ -2,16 +2,16 @@ package com.class2life.security;
 
 import com.class2life.entity.user.UserRole;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoder;
 import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Date;
 
 @Service
@@ -50,5 +50,10 @@ public class JwtService {
         Claims claims = claimsJws.getPayload();
         return claims;
     }
+
+    public long getExpirationSeconds() {
+        return expiration / 1000;
+    }
+
 
 }

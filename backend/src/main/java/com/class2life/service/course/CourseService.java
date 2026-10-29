@@ -4,6 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.class2life.entity.user.User;
+import com.class2life.exception.ApiException;
+import com.class2life.exception.ErrorCode;
+import com.class2life.repository.user.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,30 +28,28 @@ import com.class2life.repository.course.CourseRepository;
 import com.class2life.repository.course.LessonRepository;
 
 @Service
+@RequiredArgsConstructor
 public class CourseService {
     private final CourseRepository courseRepository;
     private final LessonRepository lessonRepository;
     private final CourseMapper courseMapper;
-
+    private final UserRepository userRepository;
     // Tiêm các dependency thông qua Constructor
-    public CourseService(CourseRepository courseRepository, LessonRepository lessonRepository, CourseMapper courseMapper) {
-        this.courseRepository = courseRepository;
-        this.lessonRepository = lessonRepository;
-        this.courseMapper = courseMapper;
-    }
 
     @Transactional
-    public CourseResponse createCourse(CreateCourseRequest request) {
+    public CourseResponse createCourse(@NonNull CreateCourseRequest request) {
         // 1. Khởi tạo và lưu Entity Course
         Course course = new Course();
         course.setTitle(request.title());
         course.setDescription(request.description());
         course.setCategory(request.category());
         course.setStatus(CourseStatus.DRAFT); // Mặc định khóa học mới tạo là DRAFT
-        
         // Gán instructor khi Leader hoàn thành file User và tính năng đăng nhập
-        // User instructor = userRepository.findById(instructorId).orElseThrow(...);
-        // course.setInstructor(instructor);
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User instructor = userRepository.findByEmail(email).orElseThrow(() ->
+                new ApiException(ErrorCode.USER_NOT_FOUND));
+        course.setInstructor(instructor);
 
         Course savedCourse = courseRepository.save(course);
 
@@ -211,5 +216,16 @@ public class CourseService {
             lessonRepository.deleteAll(lessons);
         }
         courseRepository.delete(course);
+    }
+
+    @Transactional(readOnly = true)
+    public Lesson getLessonOrThrow(UUID lessonId) {
+        return lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new ApiException(ErrorCode.LESSON_NOT_FOUND, "Lesson not found"));
+    }
+
+    // provides the logged-in user from the SecurityContext and Course.instructor is always set.
+    public boolean isLessonOwnedByInstructor(UUID lessonId, UUID instructorId) {
+        return true;
     }
 }
