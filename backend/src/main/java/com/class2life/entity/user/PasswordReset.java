@@ -13,14 +13,10 @@ public class PasswordReset {
       @GeneratedValue(strategy = GenerationType.UUID)
       @Column(name = "id", nullable = false)
       private UUID id;
-
-      /*
       
       @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "user_id", nullable = false)
       private User user;
-      
-      */
 
       @Column(name = "token_hash", nullable = false)
       private String tokenHash;
@@ -49,8 +45,6 @@ public class PasswordReset {
       public void setId(UUID id) {
             this.id = id;
       }
-
-      /*
       
       public User getUser() {
             return user;
@@ -59,8 +53,6 @@ public class PasswordReset {
       public void setUser(User user) {
             this.user = user;
       }
-
-      */
 
       public String getTokenHash() {
             return tokenHash;

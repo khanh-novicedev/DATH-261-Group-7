@@ -1,4 +1,5 @@
 package com.class2life.entity.interaction;
+import com.class2life.entity.user.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -15,14 +16,10 @@ public class ReportedContent {
       @GeneratedValue(strategy = GenerationType.UUID)
       @Column(name = "id", nullable = false)
       private UUID id;
-
-      /*
       
       @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "reporter_id", nullable = false)
       private User reporter;
-
-      */
 
       @Column(name = "reported_entity_type", nullable = false)
       private String reportedEntityType;
@@ -30,13 +27,11 @@ public class ReportedContent {
       @Column(name = "reported_entity_id", nullable = false)
       private UUID reportedEntityId;
 
-      /*
       
       @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "resolved_by")
       private User resolvedBy;
       
-      */
 
       @Column(name = "reason", nullable = false, columnDefinition = "text")
       private String reason;
@@ -115,8 +110,6 @@ public class ReportedContent {
       public void setResolvedAt(LocalDateTime resolvedAt) {
             this.resolvedAt = resolvedAt;
       }
-
-      /*
       
       public User getReporter() {
             return reporter;
@@ -133,7 +126,5 @@ public class ReportedContent {
       public void setResolvedBy(User resolvedBy) {
             this.resolvedBy = resolvedBy;
       }
-
-      */
 
 }

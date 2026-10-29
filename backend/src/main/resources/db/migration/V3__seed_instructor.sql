@@ -1,2 +1,2 @@
 INSERT INTO app_users (full_name, email, password_hash, role) VALUES
-                                                                  ('Instructor User',   'instructor@class2life.com',   '$2a$10$aizS0GEbH24R5jxO7kCLC.GO3crjNosM/uDMYNXVdzym0LQT1UjjS', 'INSTRUCTOR'),
+                                                                  ('Instructor User',   'instructor@class2life.com',   '$2a$10$aizS0GEbH24R5jxO7kCLC.GO3crjNosM/uDMYNXVdzym0LQT1UjjS', 'INSTRUCTOR');
