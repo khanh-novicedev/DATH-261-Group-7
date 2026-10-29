@@ -16,6 +16,8 @@ import com.class2life.dto.course.UpdateCourseRequest;
 import com.class2life.entity.course.Course;
 import com.class2life.entity.course.CourseStatus;
 import com.class2life.entity.course.Lesson;
+import com.class2life.exception.ApiException;
+import com.class2life.exception.ErrorCode;
 import com.class2life.mapper.CourseMapper;
 import com.class2life.repository.course.CourseRepository;
 import com.class2life.repository.course.LessonRepository;
@@ -211,5 +213,18 @@ public class CourseService {
             lessonRepository.deleteAll(lessons);
         }
         courseRepository.delete(course);
+    }
+
+    // Used by the assessment module (modules call each other's services, never repositories)
+    @Transactional(readOnly = true)
+    public Lesson getLessonOrThrow(UUID lessonId) {
+        return lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new ApiException(ErrorCode.LESSON_NOT_FOUND, "Lesson not found"));
+    }
+
+    // TODO: return true only when the lesson's course belongs to this instructor, once the Leader
+    // provides the logged-in user from the SecurityContext and Course.instructor is always set.
+    public boolean isLessonOwnedByInstructor(UUID lessonId, UUID instructorId) {
+        return true;
     }
 }
