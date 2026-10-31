@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { CommonHeader } from './components/LandingPageHeader';
+import { useAuth } from '@shared/context';
+import { loginApi } from '@shared/api';
+import axios from 'axios';
 
 export type AuthMode = 'signup' | 'login' | 'reset';
 
@@ -12,8 +15,8 @@ interface AuthenPageProps {
 export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // Mode can be driven by props, query string (?mode=login), or local state
   const queryMode = (searchParams.get('mode') as AuthMode) || initialMode || 'signup';
   const [mode, setMode] = useState<AuthMode>(queryMode);
 
@@ -44,7 +47,7 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
@@ -76,14 +79,71 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
 
     setIsLoading(true);
 
+    if (mode === 'login') {
+      try {
+        const res = await loginApi({ email: email.trim(), password });
+
+        const { accessToken, refreshToken, user: userData } = res.data;
+
+        const roleMap: Record<string, 'ADMIN' | 'TEACHER' | 'STUDENT'> = {
+          LEARNER: 'STUDENT',
+          STUDENT: 'STUDENT',
+          TEACHER: 'TEACHER',
+          ADMIN: 'ADMIN',
+        };
+        const mappedRole = roleMap[userData.role] ?? 'STUDENT';
+
+        login(accessToken, refreshToken, {
+          id: userData.id,
+          fullName: userData.fullName,
+          role: mappedRole,
+        });
+
+        setSuccessMessage('Logged in successfully! Redirecting...');
+
+        const redirectMap: Record<string, string> = {
+          ADMIN: '/admin',
+          TEACHER: '/teacher',
+          STUDENT: '/student/dashboard',
+        };
+        setTimeout(() => navigate(redirectMap[mappedRole] || '/student/dashboard'), 800);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err) && err.response) {
+          const status = err.response.status;
+          const errorCode: string | undefined = err.response.data?.errorCode ?? err.response.data?.code;
+
+          switch (status) {
+            case 400:
+              console.error('[Login] 400 VALIDATION_ERROR', err.response.data);
+              setError('Invalid input. Please check your email and password format.');
+              break;
+            case 401:
+              console.error('[Login] 401 INVALID_CREDENTIALS', err.response.data);
+              setError('Incorrect email or password. Please try again.');
+              break;
+            case 403:
+              console.error('[Login] 403 ACCOUNT_SUSPENDED', err.response.data);
+              setError('Your account has been suspended. Please contact the administrator.');
+              break;
+            default:
+              console.error(`[Login] Unexpected HTTP ${status}`, errorCode, err.response.data);
+              setError(`An unexpected error occurred (HTTP ${status}). Please try again later.`);
+          }
+        } else {
+          console.error('[Login] Network / unknown error', err);
+          setError('Unable to connect to the server. Please check your network and try again.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     setTimeout(() => {
       setIsLoading(false);
       if (mode === 'signup') {
         setSuccessMessage('Account created successfully! You can now log in.');
         setTimeout(() => switchMode('login'), 1500);
-      } else if (mode === 'login') {
-        setSuccessMessage('Logged in successfully! Redirecting...');
-        setTimeout(() => navigate('/student/dashboard'), 800);
       } else if (mode === 'reset') {
         setSuccessMessage('Password reset link has been dispatched to your email.');
       }

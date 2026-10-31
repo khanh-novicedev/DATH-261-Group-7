@@ -1,12 +1,22 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import { FilterState, User } from '../types';
+import { fetchUsers } from '../api/userApi';
 import { initialUsers } from '../api/mockData';
 
 export const useUserManagement = () => {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToToggle, setUserToToggle] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [page, setPage] = useState(0);
+  const [size] = useState(20);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const [filters, setFilters] = useState<FilterState>({
     search: '',
@@ -14,29 +24,61 @@ export const useUserManagement = () => {
     status: 'All',
   });
 
+  const loadUsers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await fetchUsers({
+        page,
+        size,
+        keyword: filters.search || undefined,
+        role: filters.role,
+        status: filters.status,
+      });
+
+      setUsers(result.users);
+      setTotalElements(result.totalElements);
+      setTotalPages(result.totalPages);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response) {
+        const status = err.response.status;
+
+        switch (status) {
+          case 403:
+            console.error(
+              '[UserManagement] 403 FORBIDDEN – You do not have permission to view the user list.',
+              err.response.data,
+            );
+            setError('You do not have permission to access the user list.');
+            break;
+          default:
+            console.error(
+              `[UserManagement] Unexpected HTTP ${status}`,
+              err.response.data,
+            );
+            setError(`An unexpected error occurred (HTTP ${status}).`);
+        }
+      } else {
+        console.error('[UserManagement] Network / unknown error', err);
+        setError('Unable to connect to the server. Please check your network.');
+      }
+
+      console.warn('[UserManagement] Falling back to mock data.');
+      setUsers(initialUsers);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, size, filters]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
   const handleFilterChange = (newFilters: Partial<FilterState>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
+    setPage(0);
   };
-
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      // Search filter (name or email)
-      const matchesSearch =
-        filters.search.trim() === '' ||
-        user.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        user.email.toLowerCase().includes(filters.search.toLowerCase());
-
-      // Role filter
-      const matchesRole =
-        filters.role === 'All' || user.role === filters.role;
-
-      // Status filter
-      const matchesStatus =
-        filters.status === 'All' || user.status === filters.status;
-
-      return matchesSearch && matchesRole && matchesStatus;
-    });
-  }, [users, filters]);
 
   const promptToggleStatus = (user: User) => {
     setUserToToggle(user);
@@ -52,7 +94,6 @@ export const useUserManagement = () => {
       prev.map((u) => (u.id === userToToggle.id ? { ...u, status: newStatus } : u))
     );
 
-    // If currently viewing details of this user, update it as well
     if (selectedUser?.id === userToToggle.id) {
       setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null));
     }
@@ -62,15 +103,22 @@ export const useUserManagement = () => {
 
   return {
     users,
-    filteredUsers,
+    filteredUsers: users,
     filters,
     selectedUser,
     userToToggle,
     isModalOpen,
+    isLoading,
+    error,
+    page,
+    totalPages,
+    totalElements,
     handleFilterChange,
     setSelectedUser,
     promptToggleStatus,
     confirmToggleStatus,
     setIsModalOpen,
+    setPage,
+    loadUsers,
   };
 };
