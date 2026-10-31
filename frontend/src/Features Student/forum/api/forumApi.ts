@@ -9,7 +9,7 @@ const threads = (courseId: string): ForumThread[] =>
     courseId,
     title: 'Thread title',
     preview: 'Content',
-    author: { id: i % 3 === 0 ? 'u-learner-1' : `u-${i}`, fullName: 'User name', role: 'LEARNER' },
+    author: { id: i % 3 === 0 ? 'u-learner-1' : `u-${i}`, fullName: 'User name', role: 'STUDENT' },
     createdAt: new Date(Date.now() - (i + 1) * 3_600_000).toISOString(),
     replyCount,
   }))

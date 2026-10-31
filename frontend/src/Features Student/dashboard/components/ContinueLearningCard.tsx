@@ -14,7 +14,7 @@ export function ContinueLearningCard({ enrolment }: { enrolment: EnrolledCourse 
       <div className="space-y-1">
         <h2 className="text-xl font-semibold text-slate-900">{course.title}</h2>
         <p className="text-sm text-slate-500">
-          Lesson {lesson.sequenceNumber} · {lesson.title}
+          {lesson ? `Lesson ${lesson.sequenceNumber} · ${lesson.title}` : 'No lessons yet'}
         </p>
       </div>
       <div className="flex items-center gap-3">
@@ -22,7 +22,12 @@ export function ContinueLearningCard({ enrolment }: { enrolment: EnrolledCourse 
         <span className="text-sm font-medium">{pct}%</span>
       </div>
       <div className="flex gap-3 pt-1">
-        <Button onClick={() => navigate(`/student/courses/${course.id}/lessons/${lesson.id}`)}>Continue lesson</Button>
+        <Button
+          disabled={!lesson}
+          onClick={() => lesson && navigate(`/student/courses/${course.id}/lessons/${lesson.id}`)}
+        >
+          Continue lesson
+        </Button>
         <Button variant="outline" onClick={() => navigate(`/student/courses/${course.id}`)}>
           View syllabus
         </Button>

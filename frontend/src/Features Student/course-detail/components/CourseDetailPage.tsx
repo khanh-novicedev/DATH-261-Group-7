@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { BookOpen, CheckCircle2, FileText, HelpCircle, Lock, Upload, User, Users, Video, type LucideIcon } from 'lucide-react'
-import { Badge, Breadcrumb, Button, Card, CardTitle, Dialog, IconStat } from '@shared/components'
+import { Badge, Banner, Breadcrumb, Button, Card, CardTitle, Dialog, IconStat } from '@shared/components'
 import { cn } from '@shared/utils'
 import { useCourseDetail } from '../hooks/useCourseDetail'
 import type { CourseDetail, CourseOutlineItem } from '../types'
@@ -34,6 +34,7 @@ export function CourseDetailPage() {
   const d = useCourseDetail(courseId)
   const c = d.course
 
+  if (d.loadError) return <Banner tone="danger">{d.loadError}</Banner>
   if (d.loading || !c) return <p className="text-sm text-slate-500">Loading…</p>
 
   const liveCount = c.outline.filter((i) => i.type === 'LIVE_PRACTICE').length
@@ -42,6 +43,7 @@ export function CourseDetailPage() {
   return (
     <div className="space-y-4">
       <Breadcrumb items={[{ label: 'Course Catalog', to: '/student/catalog' }, { label: c.title }]} />
+      {d.error && <Banner tone={d.isEnrolled ? 'warning' : 'danger'}>{d.error}</Banner>}
 
       <div className="flex gap-6">
         <div className="flex flex-1 flex-col gap-5">
@@ -50,7 +52,6 @@ export function CourseDetailPage() {
             <div className="space-y-2">
               {c.category && <Badge>{c.category}</Badge>}
               <h1 className="text-2xl font-semibold text-slate-900">{c.title}</h1>
-              <p className="text-sm text-slate-500">With {c.instructor.fullName}</p>
               <p className="text-sm text-slate-600">{c.description}</p>
             </div>
           </div>

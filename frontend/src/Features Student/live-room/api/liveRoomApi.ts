@@ -2,9 +2,9 @@ import { mockResponse } from '@shared/utils'
 import type { UserSummary } from '@shared/types'
 import type { BreakoutRoom, NoteColor, RoomMessage, WhiteboardNote } from '../types'
 
-const user = (n: number) => ({ id: `u-${n}`, fullName: 'User name', role: 'LEARNER' as const })
-const me = { id: 'u-learner-1', fullName: 'User name', role: 'LEARNER' as const }
-const instructor = { id: 'u-instructor-1', fullName: 'Instructor name', role: 'INSTRUCTOR' as const }
+const user = (n: number) => ({ id: `u-${n}`, fullName: 'User name', role: 'STUDENT' as const })
+const me = { id: 'u-learner-1', fullName: 'User name', role: 'STUDENT' as const }
+const instructor = { id: 'u-instructor-1', fullName: 'Instructor name', role: 'TEACHER' as const }
 
 const note = (id: number, color: NoteColor, posX: number, posY: number): WhiteboardNote => ({
   id: `n-${id}`,

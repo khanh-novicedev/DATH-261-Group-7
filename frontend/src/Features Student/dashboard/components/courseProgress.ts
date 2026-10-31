@@ -1,6 +1,7 @@
 import type { EnrolledCourse } from '../types'
 
-export const progressPercent = (c: EnrolledCourse) => Math.round((c.completedLessons / c.totalLessons) * 100)
+export const progressPercent = (c: EnrolledCourse) =>
+  c.totalLessons > 0 ? Math.round((c.completedLessons / c.totalLessons) * 100) : 0
 
 export const accentBg: Record<EnrolledCourse['accent'], string> = {
   amber: 'bg-amber-100',

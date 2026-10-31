@@ -20,7 +20,9 @@ export function CourseCard({ course }: { course: CatalogCourse }) {
       <div className={cn('h-[170px] w-full', accentBg[course.accent])} />
       <div className="space-y-1.5 px-5 py-4">
         <p className="text-sm font-semibold text-slate-900">{course.title}</p>
-        <p className="text-sm text-slate-500">With {course.instructor.fullName}</p>
+        <p className="text-sm text-slate-500">
+          {course.lessonCount} lessons{course.category ? ` · ${course.category}` : ''}
+        </p>
       </div>
     </Link>
   )

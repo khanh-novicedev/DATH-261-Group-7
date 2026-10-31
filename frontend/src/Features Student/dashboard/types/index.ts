@@ -1,13 +1,14 @@
-import type { CompletionStatus, CourseSummary, UUID } from '@shared/types'
+import type { CompletionStatus, UUID } from '@shared/types'
+import type { Accent } from '@shared/utils'
 
 export interface EnrolledCourse {
   enrolmentId: UUID
-  course: CourseSummary
+  course: { id: UUID; title: string; category: string | null }
   completionStatus: CompletionStatus
   completedLessons: number
   totalLessons: number
-  lastPositionLesson: { id: UUID; sequenceNumber: number; title: string }
-  accent: 'amber' | 'sky' | 'emerald' | 'violet' | 'rose' | 'teal'
+  lastPositionLesson: { id: UUID; sequenceNumber: number; title: string } | null
+  accent: Accent
 }
 
 export interface UpcomingLiveSession {
