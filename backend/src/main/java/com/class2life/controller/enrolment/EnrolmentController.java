@@ -2,10 +2,7 @@ package com.class2life.controller.enrolment;
 
 import com.class2life.common.ApiResponse;
 import com.class2life.dto.enrolment.EnrolmentResponse;
-import com.class2life.entity.enrolment.Enrolment;
-import com.class2life.service.course.CourseService;
 import com.class2life.service.enrolment.EnrolmentService;
-import com.class2life.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
