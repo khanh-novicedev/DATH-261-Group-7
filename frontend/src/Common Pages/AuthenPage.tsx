@@ -4,6 +4,7 @@ import { Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { CommonHeader } from './components/LandingPageHeader';
 import { useAuth } from '@shared/context';
 import { loginApi } from '@shared/api';
+import type { UserRole } from '@shared/types';
 import axios from 'axios';
 
 export type AuthMode = 'signup' | 'login' | 'reset';
@@ -85,28 +86,26 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
 
         const { accessToken, refreshToken, user: userData } = res.data;
 
-        const roleMap: Record<string, 'ADMIN' | 'TEACHER' | 'STUDENT'> = {
-          LEARNER: 'STUDENT',
-          STUDENT: 'STUDENT',
-          TEACHER: 'TEACHER',
-          ADMIN: 'ADMIN',
-        };
-        const mappedRole = roleMap[userData.role] ?? 'STUDENT';
+        const apiRole = (userData.role || '').toUpperCase();
 
         login(accessToken, refreshToken, {
           id: userData.id,
           fullName: userData.fullName,
-          role: mappedRole,
+          role: userData.role as UserRole,
         });
 
         setSuccessMessage('Logged in successfully! Redirecting...');
 
-        const redirectMap: Record<string, string> = {
-          ADMIN: '/admin',
-          TEACHER: '/teacher',
-          STUDENT: '/student/dashboard',
-        };
-        setTimeout(() => navigate(redirectMap[mappedRole] || '/student/dashboard'), 800);
+        let redirectPath = '/student/dashboard';
+        if (apiRole === 'ADMIN') {
+          redirectPath = '/admin';
+        } else if (apiRole === 'INSTRUCTOR' || apiRole === 'TEACHER') {
+          redirectPath = '/teacher';
+        } else if (apiRole === 'LEARNER' || apiRole === 'STUDENT') {
+          redirectPath = '/student/dashboard';
+        }
+
+        setTimeout(() => navigate(redirectPath), 800);
       } catch (err: unknown) {
         if (axios.isAxiosError(err) && err.response) {
           const status = err.response.status;
@@ -114,14 +113,17 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
 
           switch (status) {
             case 400:
+              // 400 VALIDATION_ERROR
               console.error('[Login] 400 VALIDATION_ERROR', err.response.data);
               setError('Invalid input. Please check your email and password format.');
               break;
             case 401:
+              // 401 INVALID_CREDENTIALS
               console.error('[Login] 401 INVALID_CREDENTIALS', err.response.data);
               setError('Incorrect email or password. Please try again.');
               break;
             case 403:
+              // 403 ACCOUNT_SUSPENDED
               console.error('[Login] 403 ACCOUNT_SUSPENDED', err.response.data);
               setError('Your account has been suspended. Please contact the administrator.');
               break;
@@ -130,6 +132,7 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
               setError(`An unexpected error occurred (HTTP ${status}). Please try again later.`);
           }
         } else {
+          // Network error or something else
           console.error('[Login] Network / unknown error', err);
           setError('Unable to connect to the server. Please check your network and try again.');
         }

@@ -23,34 +23,13 @@ export const UserDetail: React.FC<UserDetailProps> = ({
   const isSuspended = user.status === 'Suspended';
 
   const personalInfo = user.personalInfo || {
-    dateOfBirth: 'October 12, 1998',
-    phoneNumber: '+1 (555) 123-4567',
-    address: '123 Main St, New York, NY 10001',
+    dateOfBirth: '—',
+    phoneNumber: '—',
+    address: '—',
   };
 
-  const recentLogins = user.recentLogins || [
-    { id: '1', timestamp: 'Today, 10:42 AM', device: 'Chrome on macOS' },
-    { id: '2', timestamp: 'Yesterday, 8:15 PM', device: 'Safari on iOS' },
-  ];
-
-  const enrolledCourses = user.enrolledCourses || [
-    {
-      id: 'c-1',
-      title: 'Advanced Data Structures',
-      instructor: 'Prof. Sarah Jenkins',
-      currentLesson: 5,
-      totalLessons: 12,
-      progressPercentage: 42,
-    },
-    {
-      id: 'c-2',
-      title: 'Introduction to Machine Learning',
-      instructor: 'Dr. Michael Chen',
-      currentLesson: 2,
-      totalLessons: 8,
-      progressPercentage: 25,
-    },
-  ];
+  const recentLogins = user.recentLogins || [];
+  const enrolledCourses = user.enrolledCourses || [];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -159,20 +138,24 @@ export const UserDetail: React.FC<UserDetailProps> = ({
           <div className="space-y-3 mb-6">
             <h3 className="text-sm font-medium text-slate-700">Recent Logins</h3>
             <div className="space-y-2.5">
-              {recentLogins.map((login) => (
-                <div
-                  key={login.id}
-                  className="flex items-center justify-between text-sm py-1"
-                >
-                  <div className="flex items-center gap-2 text-slate-900">
-                    <Calendar className="w-4 h-4 text-slate-400" />
-                    <span>{login.timestamp}</span>
+              {recentLogins.length > 0 ? (
+                recentLogins.map((login) => (
+                  <div
+                    key={login.id}
+                    className="flex items-center justify-between text-sm py-1"
+                  >
+                    <div className="flex items-center gap-2 text-slate-900">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span>{login.timestamp}</span>
+                    </div>
+                    <span className="text-xs text-slate-500 font-medium">
+                      {login.device}
+                    </span>
                   </div>
-                  <span className="text-xs text-slate-500 font-medium">
-                    {login.device}
-                  </span>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-xs text-slate-400 py-1">No recent login data</p>
+              )}
             </div>
           </div>
 
@@ -182,45 +165,49 @@ export const UserDetail: React.FC<UserDetailProps> = ({
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-slate-700">Enrolled Courses</h3>
             <div className="space-y-3">
-              {enrolledCourses.map((course) => (
-                <div
-                  key={course.id}
-                  className="p-3.5 bg-white border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-slate-300 transition-colors"
-                >
-                  {/* Left: Thumbnail & Course Info */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-lg bg-[#FEF3C7] text-slate-700 flex items-center justify-center shrink-0">
-                      <BookOpen className="w-5 h-5 text-slate-700" />
+              {enrolledCourses.length > 0 ? (
+                enrolledCourses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="p-3.5 bg-white border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-slate-300 transition-colors"
+                  >
+                    {/* Left: Thumbnail & Course Info */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-12 h-12 rounded-lg bg-[#FEF3C7] text-slate-700 flex items-center justify-center shrink-0">
+                        <BookOpen className="w-5 h-5 text-slate-700" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">
+                          {course.title}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {course.instructor}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">
-                        {course.title}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {course.instructor}
-                      </p>
-                    </div>
-                  </div>
 
-                  {/* Right: Progress */}
-                  <div className="w-full sm:w-48 shrink-0">
-                    <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="text-slate-500">
-                        Lesson {course.currentLesson}/{course.totalLessons}
-                      </span>
-                      <span className="font-semibold text-slate-900">
-                        {course.progressPercentage}%
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                      <div
-                        className="bg-slate-900 h-full rounded-full transition-all duration-300"
-                        style={{ width: `${course.progressPercentage}%` }}
-                      />
+                    {/* Right: Progress */}
+                    <div className="w-full sm:w-48 shrink-0">
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="text-slate-500">
+                          Lesson {course.currentLesson}/{course.totalLessons}
+                        </span>
+                        <span className="font-semibold text-slate-900">
+                          {course.progressPercentage}%
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                        <div
+                          className="bg-slate-900 h-full rounded-full transition-all duration-300"
+                          style={{ width: `${course.progressPercentage}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-xs text-slate-400 py-1">No enrolled courses</p>
+              )}
             </div>
           </div>
         </div>

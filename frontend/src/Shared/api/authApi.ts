@@ -1,4 +1,5 @@
 import { apiClient } from './client'
+import type { UserRole } from '@shared/types'
 
 
 export interface LoginRequest {
@@ -10,7 +11,7 @@ export interface LoginUser {
   id: string
   fullName: string
   email: string
-  role: 'ADMIN' | 'TEACHER' | 'STUDENT'
+  role: UserRole | string
 }
 
 export interface LoginResponse {

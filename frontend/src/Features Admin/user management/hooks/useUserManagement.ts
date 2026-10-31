@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { FilterState, User } from '../types';
 import { fetchUsers } from '../api/userApi';
-import { initialUsers } from '../api/mockData';
 
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -64,8 +63,9 @@ export const useUserManagement = () => {
         setError('Unable to connect to the server. Please check your network.');
       }
 
-      console.warn('[UserManagement] Falling back to mock data.');
-      setUsers(initialUsers);
+      setUsers([]);
+      setTotalElements(0);
+      setTotalPages(0);
     } finally {
       setIsLoading(false);
     }

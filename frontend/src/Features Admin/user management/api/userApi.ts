@@ -32,13 +32,14 @@ export interface UserListResponse {
 const API_ROLE_TO_UI: Record<string, UserRole> = {
   LEARNER: 'Student',
   STUDENT: 'Student',
+  INSTRUCTOR: 'Teacher',
   TEACHER: 'Teacher',
   ADMIN: 'Admin',
 }
 
 const UI_ROLE_TO_API: Record<string, string> = {
   Student: 'LEARNER',
-  Teacher: 'TEACHER',
+  Teacher: 'INSTRUCTOR',
   Admin: 'ADMIN',
 }
 
@@ -62,8 +63,8 @@ function mapApiUserToUser(item: ApiUserItem): User {
     id: item.id,
     name: item.fullName,
     email: item.email,
-    role: API_ROLE_TO_UI[item.role] ?? 'Student',
-    status: API_STATUS_TO_UI[item.status] ?? 'Active',
+    role: API_ROLE_TO_UI[item.role?.toUpperCase()] ?? 'Student',
+    status: API_STATUS_TO_UI[item.status?.toUpperCase()] ?? 'Active',
     joinedDate: formatDate(item.createdAt),
     initials,
   }
