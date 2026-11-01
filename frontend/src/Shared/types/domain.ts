@@ -1,6 +1,6 @@
 export type UUID = string
 
-export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT'
+export type UserRole = 'ADMIN' | 'INSTRUCTOR' | 'LEARNER' | 'TEACHER' | 'STUDENT'
 export type CourseStatus = 'DRAFT' | 'PUBLISHED' | 'HIDDEN'
 export type LessonType = 'VIDEO' | 'TEXT' | 'LIVE_PRACTICE'
 export type CompletionStatus = 'IN_PROGRESS' | 'COMPLETED'

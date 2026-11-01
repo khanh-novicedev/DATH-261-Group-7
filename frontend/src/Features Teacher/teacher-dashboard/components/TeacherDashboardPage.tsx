@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@shared/context";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MOCK_ANNOUNCEMENTS, MOCK_USER } from "../api/mockCourses";
 import { useCourses } from "../hooks/useCourses";
@@ -120,6 +121,8 @@ export function TeacherDashboardPage() {
     navigate(getPathFromView(nextView));
   };
 
+  const { user } = useAuth();
+  const currentUserName = user?.fullName || MOCK_USER.name;
   const { courses, addCourse, addLesson, updateLesson, deleteLesson } =
     useCourses();
   const [creating, setCreating] = useState(false);
@@ -152,8 +155,8 @@ export function TeacherDashboardPage() {
   const goToDashboard = () => setView({ name: "dashboard" });
   const goToCourses = () => setView({ name: "courses" });
 
-  const handleCreate = (input: NewCourseInput) => {
-    addCourse(input);
+  const handleCreate = async (input: NewCourseInput) => {
+    await addCourse(input);
     setCreating(false);
     setView({ name: "courses" });
   };
@@ -369,7 +372,7 @@ export function TeacherDashboardPage() {
               ? "qa-reports"
               : "courses"
         }
-        userName={MOCK_USER.name}
+        userName={currentUserName}
         onDashboard={goToDashboard}
         onMyCourses={goToCourses}
         onQAReports={() => setView({ name: "qa-reports" })}
@@ -381,7 +384,7 @@ export function TeacherDashboardPage() {
           questions={forumQuestions.filter(
             (question) => question.courseId === course.id,
           )}
-          currentUser={MOCK_USER.name}
+          currentUser={currentUserName}
           onBack={() => setView({ name: "course", courseId: course.id })}
           onAddAnswer={handleAddAnswer}
           onEditAnswer={handleEditAnswer}
@@ -460,21 +463,21 @@ export function TeacherDashboardPage() {
       ) : view.name === "courses" ? (
         <MyCoursesView
           courses={courses}
-          userName={MOCK_USER.name}
+          userName={currentUserName}
           onNewCourse={() => setCreating(true)}
           onOpenCourse={(courseId) => setView({ name: "course", courseId })}
         />
       ) : view.name === "qa-reports" ? (
         <QnaReportView
           items={qaItems}
-          currentUser={MOCK_USER.name}
+          currentUser={currentUserName}
           onToggleStatus={handleToggleQnaStatus}
           onReply={handleQnaReply}
         />
       ) : (
         <DashboardView
           announcements={MOCK_ANNOUNCEMENTS}
-          userName={MOCK_USER.name}
+          userName={currentUserName}
           courses={courses}
           unresolvedQaReports={
             qaItems.filter((item) => item.status === "unresolved").length

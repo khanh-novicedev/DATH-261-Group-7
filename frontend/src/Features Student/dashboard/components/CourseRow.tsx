@@ -17,12 +17,14 @@ export function CourseRow({ enrolment }: { enrolment: EnrolledCourse }) {
       </div>
       <div className="min-w-0 flex-1 space-y-1">
         <p className="truncate text-sm font-medium text-slate-900">{course.title}</p>
-        <p className="text-xs font-medium text-slate-500">{course.instructor.fullName}</p>
+        <p className="text-xs font-medium text-slate-500">{course.category ?? 'Course'}</p>
       </div>
       <div className="w-[200px] space-y-1.5">
         <div className="flex justify-between text-xs font-medium">
           <span className="text-slate-500">
-            Lesson {enrolment.lastPositionLesson.sequenceNumber}/{enrolment.totalLessons}
+            {enrolment.lastPositionLesson
+              ? `Lesson ${enrolment.lastPositionLesson.sequenceNumber}/${enrolment.totalLessons}`
+              : `${enrolment.totalLessons} lessons`}
           </span>
           <span className="text-slate-900">{pct}%</span>
         </div>

@@ -1,7 +1,12 @@
-import type { CourseSummary } from '@shared/types'
+import type { Accent } from '@shared/utils'
 
-export interface CatalogCourse extends CourseSummary {
-  accent: 'amber' | 'sky' | 'emerald' | 'violet' | 'rose' | 'teal'
+export interface CatalogCourse {
+  id: string
+  title: string
+  description: string
+  category: string | null
+  lessonCount: number
+  accent: Accent
 }
 
 export type CatalogSort = 'newest' | 'title'
