@@ -1,9 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react';
+import axios from 'axios';
+import { apiClient } from '../Shared/api';
+import { useAuth } from '../Shared/context';
 import { CommonHeader } from './components/LandingPageHeader';
+import type { UserSummary } from '../Shared/types';
 
 export type AuthMode = 'signup' | 'login' | 'reset';
+
+interface LoginResponse {
+  accessToken: string;
+  user: {
+    id: string;
+    fullName: string;
+    role: 'ADMIN' | 'INSTRUCTOR' | 'LEARNER';
+  };
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T | null;
+  errorCode?: string;
+}
 
 interface AuthenPageProps {
   initialMode?: AuthMode;
@@ -12,6 +32,7 @@ interface AuthenPageProps {
 export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   // Mode can be driven by props, query string (?mode=login), or local state
   const queryMode = (searchParams.get('mode') as AuthMode) || initialMode || 'signup';
@@ -44,7 +65,7 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
@@ -76,14 +97,57 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
 
     setIsLoading(true);
 
+    if (mode === 'login') {
+      try {
+        const { data: response } = await apiClient.post<ApiResponse<LoginResponse>>(
+          '/auth/login',
+          { email: email.trim(), password },
+        );
+        if (!response.success || !response.data?.accessToken) {
+          throw new Error(response.message || 'The server returned an invalid login response.');
+        }
+
+        const roleByApiRole = {
+          ADMIN: 'ADMIN',
+          INSTRUCTOR: 'TEACHER',
+          LEARNER: 'STUDENT',
+        } as const;
+        const user: UserSummary = {
+          id: response.data.user.id,
+          fullName: response.data.user.fullName,
+          role: roleByApiRole[response.data.user.role],
+        };
+        localStorage.setItem('accessToken', response.data.accessToken);
+        localStorage.setItem('authUser', JSON.stringify(user));
+        setUser(user);
+        navigate(
+          {
+            ADMIN: '/admin',
+            TEACHER: '/teacher/dashboard',
+            STUDENT: '/student/dashboard',
+          }[user.role],
+          { replace: true },
+        );
+      } catch (loginError) {
+        const message = axios.isAxiosError<ApiResponse<never>>(loginError)
+          ? loginError.response?.data?.message ??
+            loginError.response?.data?.errorCode ??
+            loginError.message
+          : loginError instanceof Error
+            ? loginError.message
+            : 'Unable to log in. Please try again.';
+        setError(message);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     setTimeout(() => {
       setIsLoading(false);
       if (mode === 'signup') {
         setSuccessMessage('Account created successfully! You can now log in.');
         setTimeout(() => switchMode('login'), 1500);
-      } else if (mode === 'login') {
-        setSuccessMessage('Logged in successfully! Redirecting...');
-        setTimeout(() => navigate('/student/dashboard'), 800);
       } else if (mode === 'reset') {
         setSuccessMessage('Password reset link has been dispatched to your email.');
       }

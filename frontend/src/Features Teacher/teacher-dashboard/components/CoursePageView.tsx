@@ -7,7 +7,9 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 interface CoursePageViewProps {
   course: Course;
+  canEditCourse: boolean;
   onBack: () => void;
+  onEditCourse: () => void;
   hasForum: boolean;
   onCreateForum: () => void;
   onOpenForum: () => void;
@@ -19,7 +21,9 @@ interface CoursePageViewProps {
 
 export function CoursePageView({
   course,
+  canEditCourse,
   onBack,
+  onEditCourse,
   onNewLesson,
   onOpenLesson,
   onEditLesson,
@@ -64,6 +68,15 @@ export function CoursePageView({
           </p>
         </div>
         <div className="td-topbar__actions">
+          {canEditCourse && (
+            <button
+              type="button"
+              className="td-btn td-btn--outline"
+              onClick={onEditCourse}
+            >
+              Edit course
+            </button>
+          )}
           <button
             type="button"
             className="td-btn td-btn--primary"

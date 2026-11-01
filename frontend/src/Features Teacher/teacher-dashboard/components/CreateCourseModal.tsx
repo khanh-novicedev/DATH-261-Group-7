@@ -1,17 +1,34 @@
+import axios from 'axios';
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import type { NewCourseInput } from '../types/course';
 
 interface CreateCourseModalProps {
   onClose: () => void;
-  onCreate: (input: NewCourseInput) => void;
+  onCreate: (input: NewCourseInput) => Promise<void>;
+  initialCourse?: NewCourseInput;
+  mode?: 'create' | 'edit';
+}
+
+interface ApiErrorResponse {
+  message?: string;
+  errorCode?: string;
 }
 
 const FOCUSABLE = 'button:not([disabled]), input, textarea, [href], [tabindex]:not([tabindex="-1"])';
 
-export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+export function CreateCourseModal({
+  onClose,
+  onCreate,
+  initialCourse,
+  mode = 'create',
+}: CreateCourseModalProps) {
+  const [name, setName] = useState(initialCourse?.name ?? '');
+  const [description, setDescription] = useState(
+    initialCourse?.description ?? '',
+  );
+  const [category, setCategory] = useState(initialCourse?.category ?? '');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -19,6 +36,7 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
   const titleId = `${uid}-title`;
   const nameId = `${uid}-name`;
   const descId = `${uid}-description`;
+  const categoryId = `${uid}-category`;
   const errorId = `${uid}-error`;
 
   // Focus the first field, lock page scroll, and restore focus to the opener on close.
@@ -36,7 +54,7 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') {
       e.stopPropagation();
-      onClose();
+      if (!submitting) onClose();
       return;
     }
     if (e.key !== 'Tab' || !dialogRef.current) return;
@@ -54,7 +72,7 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
@@ -62,14 +80,36 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
       nameRef.current?.focus();
       return;
     }
-    onCreate({ name: trimmed, description: description.trim() });
+
+    setSubmitting(true);
+    setError('');
+    try {
+      await onCreate({
+        name: trimmed,
+        description: description.trim(),
+        category: category.trim(),
+      });
+    } catch (submitError) {
+      let message = 'Unable to create course. Please try again.';
+      if (axios.isAxiosError<ApiErrorResponse>(submitError)) {
+        message = submitError.response
+          ? submitError.response.data?.message ??
+            submitError.response.data?.errorCode ??
+            submitError.message
+          : `Cannot reach the API at ${submitError.config?.baseURL ?? 'the configured API URL'}. Make sure the backend is running and VITE_API_BASE_URL points to it.`;
+      } else if (submitError instanceof Error) {
+        message = submitError.message;
+      }
+      setError(message);
+      setSubmitting(false);
+    }
   };
 
   return (
     <div
       className="td-overlay"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (!submitting && e.target === e.currentTarget) onClose();
       }}
       onKeyDown={handleKeyDown}
     >
@@ -82,9 +122,15 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
       >
         <div className="td-modal__header">
           <h2 id={titleId} className="td-modal__title">
-            Create Course
+            {mode === 'edit' ? 'Edit Course' : 'Create Course'}
           </h2>
-          <button type="button" className="td-modal__close" aria-label="Close" onClick={onClose}>
+          <button
+            type="button"
+            className="td-modal__close"
+            aria-label="Close"
+            onClick={onClose}
+            disabled={submitting}
+          >
             X
           </button>
         </div>
@@ -105,6 +151,7 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
               setName(e.target.value);
               if (error) setError('');
             }}
+            disabled={submitting}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? errorId : undefined}
             autoComplete="off"
@@ -125,15 +172,50 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
             rows={3}
             maxLength={500}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              if (error) setError('');
+            }}
+            disabled={submitting}
+          />
+
+          <label className="td-modal__label" htmlFor={categoryId}>
+            Category
+          </label>
+          <input
+            id={categoryId}
+            className="td-modal__input"
+            type="text"
+            placeholder="e.g. Teamwork"
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              if (error) setError('');
+            }}
+            disabled={submitting}
           />
 
           <div className="td-modal__actions">
-            <button type="button" className="td-btn td-btn--ghost" onClick={onClose}>
+            <button
+              type="button"
+              className="td-btn td-btn--ghost"
+              onClick={onClose}
+              disabled={submitting}
+            >
               Cancel
             </button>
-            <button type="submit" className="td-btn td-btn--modal">
-              Create
+            <button
+              type="submit"
+              className="td-btn td-btn--modal"
+              disabled={submitting}
+            >
+              {submitting
+                ? mode === 'edit'
+                  ? 'Saving…'
+                  : 'Creating…'
+                : mode === 'edit'
+                  ? 'Save changes'
+                  : 'Create'}
             </button>
           </div>
         </form>

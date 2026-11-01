@@ -8,7 +8,10 @@ function makeId(): string {
 }
 
 /** Local, in-memory course list. Newly created courses are added to the top. */
-export function useCourses(initial: Course[] = MOCK_COURSES) {
+export function useCourses(
+  initial: Course[] = MOCK_COURSES,
+  instructorName = MOCK_USER.name,
+) {
   const [courses, setCourses] = useState<Course[]>(initial);
 
   const addLesson = (courseId: string, lesson: Lesson) => {
@@ -58,12 +61,13 @@ export function useCourses(initial: Course[] = MOCK_COURSES) {
     );
   };
 
-  const addCourse = useCallback((input: NewCourseInput): Course => {
+  const addCourse = useCallback((input: NewCourseInput, id = makeId()): Course => {
     const course: Course = {
-      id: makeId(),
+      id,
       title: input.name.trim(),
-      instructor: MOCK_USER.name,
+      instructor: instructorName,
       description: input.description.trim(),
+      category: input.category?.trim(),
       students: 0,
       forumThreads: 0,
       unansweredThreads: 0,
@@ -71,7 +75,32 @@ export function useCourses(initial: Course[] = MOCK_COURSES) {
     };
     setCourses((prev) => [course, ...prev]);
     return course;
-  }, []);
+  }, [instructorName]);
 
-  return { courses, addCourse, addLesson, updateLesson, deleteLesson };
+  const updateCourseDetails = useCallback(
+    (courseId: string, input: NewCourseInput) => {
+      setCourses((previous) =>
+        previous.map((course) =>
+          course.id === courseId
+            ? {
+                ...course,
+                title: input.name.trim(),
+                description: input.description.trim(),
+                category: input.category?.trim(),
+              }
+            : course,
+        ),
+      );
+    },
+    [],
+  );
+
+  return {
+    courses,
+    addCourse,
+    updateCourseDetails,
+    addLesson,
+    updateLesson,
+    deleteLesson,
+  };
 }

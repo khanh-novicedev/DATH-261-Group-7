@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../Shared/context";
 import { ChevronDownIcon } from "./Icons";
 
 interface AppHeaderProps {
@@ -18,6 +19,7 @@ export function AppHeader({
   onQAReports,
 }: AppHeaderProps) {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   return (
@@ -83,6 +85,21 @@ export function AppHeader({
               >
                 <span aria-hidden="true">👤</span>
                 <span>My Profile</span>
+              </button>
+              <button
+                type="button"
+                className="td-user__dropdown-item"
+                role="menuitem"
+                onClick={() => {
+                  localStorage.removeItem("accessToken");
+                  localStorage.removeItem("authUser");
+                  setUser(null);
+                  setProfileMenuOpen(false);
+                  navigate("/login", { replace: true });
+                }}
+              >
+                <span aria-hidden="true">↪</span>
+                <span>Log out</span>
               </button>
             </div>
           )}
