@@ -42,7 +42,7 @@ export function QnaPanel({ threads, onAsk }: { threads: QnaThread[]; onAsk: (tex
             {t.replies.map((r) => (
               <div key={r.id} className="space-y-1 rounded-lg bg-slate-50 px-3 py-2.5">
                 <p className="text-xs font-medium text-slate-900">
-                  {r.author.fullName} {r.author.role === 'INSTRUCTOR' && '· Instructor'}
+                  {r.author.fullName} {r.author.role === 'TEACHER' && '· Instructor'}
                 </p>
                 <p className="text-xs text-slate-600">{r.content}</p>
               </div>

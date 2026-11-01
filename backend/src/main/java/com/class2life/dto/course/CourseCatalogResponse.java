@@ -9,7 +9,7 @@ public record CourseCatalogResponse(
         String description,
         String category,
         CourseStatus status,
-        UUID instructorId, // Tạm giữ ID thay vì Object Instructor vì nhánh User chưa gộp
-        int lessonCount    // Chỉ trả về số lượng bài học thay vì toàn bộ danh sách
+        InstructorSummary instructor,
+        int lessonCount
 ) {
 }
