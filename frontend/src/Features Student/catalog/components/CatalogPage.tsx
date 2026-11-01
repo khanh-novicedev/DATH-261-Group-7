@@ -1,10 +1,9 @@
-import { Button, Chip, Input, PageHeading } from '@shared/components'
-import { CATEGORIES } from '../api/catalogApi'
+import { Banner, Button, Chip, Input, PageHeading } from '@shared/components'
 import { useCatalog } from '../hooks/useCatalog'
 import { CourseCard } from './CourseCard'
 
 export function CatalogPage() {
-  const { courses, loading, filter, setFilter } = useCatalog()
+  const { courses, categories, loading, error, filter, setFilter } = useCatalog()
 
   return (
     <div className="space-y-5">
@@ -12,7 +11,7 @@ export function CatalogPage() {
 
       <div className="flex gap-3">
         <Input
-          placeholder="Search by course or instructor..."
+          placeholder="Search by course title..."
           value={filter.query}
           onChange={(e) => setFilter((f) => ({ ...f, query: e.target.value }))}
         />
@@ -23,7 +22,7 @@ export function CatalogPage() {
         <Chip selected={filter.category === null} onClick={() => setFilter((f) => ({ ...f, category: null }))}>
           All
         </Chip>
-        {CATEGORIES.map((c) => (
+        {categories.map((c) => (
           <Chip key={c} selected={filter.category === c} onClick={() => setFilter((f) => ({ ...f, category: c }))}>
             {c}
           </Chip>
@@ -44,6 +43,8 @@ export function CatalogPage() {
           </select>
         </label>
       </div>
+
+      {error && <Banner tone="danger">{error}</Banner>}
 
       {loading ? (
         <p className="text-sm text-slate-500">Loading…</p>
