@@ -20,7 +20,6 @@ import com.class2life.common.PageResponse;
 import com.class2life.dto.course.CourseCatalogResponse;
 import com.class2life.dto.course.CourseResponse;
 import com.class2life.dto.course.CreateCourseRequest;
-import com.class2life.entity.course.CourseStatus;
 import com.class2life.service.course.CourseService;
 
 import jakarta.validation.Valid;
@@ -58,12 +57,10 @@ public class CourseController {
     public ResponseEntity<ApiResponse<PageResponse<CourseCatalogResponse>>> getCourseCatalog(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) CourseStatus status,
-            @RequestParam(defaultValue = "false") boolean mine,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "10") int size
     ) {
-        var response = courseService.getCourseCatalog(keyword, category, status, mine, page, size);
+        var response = courseService.getCourseCatalog(keyword, category, page, size);
         var apiResponse = new ApiResponse<>(true, "Catalog retrieved successfully", response);
         return ResponseEntity.ok(apiResponse);
     }

@@ -2,26 +2,14 @@ package com.class2life.service.course;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import com.class2life.dto.course.InstructorSummary;
 import com.class2life.entity.user.User;
-import com.class2life.entity.user.UserRole;
-import com.class2life.repository.course.CourseSpecifications;
 import com.class2life.exception.ApiException;
 import com.class2life.exception.ErrorCode;
 import com.class2life.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,65 +74,35 @@ public class CourseService {
         // 3. Map sang Response DTO và trả về
         return courseMapper.toCourseResponse(savedCourse, savedLessons);
     }
-    private static final int MAX_PAGE_SIZE = 100;
+    // Hàm lấy danh sách khóa học
+    public PageResponse<CourseCatalogResponse> getCourseCatalog(String keyword, String category, int page, int size) {
+        // Tạo đối tượng phân trang (page trong Spring bắt đầu từ 0)
+        var pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        
+        // A null parameter inside LOWER(CONCAT(...)) cannot be typed by PostgreSQL,
+        // so an empty keyword is used instead; '%%' matches every title.
+        String normalizedKeyword = (keyword == null || keyword.isBlank()) ? "" : keyword.trim();
 
-    @Transactional(readOnly = true)
-    public PageResponse<CourseCatalogResponse> getCourseCatalog(String keyword, String category, CourseStatus status,
-                                                                boolean mine, int page, int size) {
-        if (page < 0) {
-            throw new ApiException(ErrorCode.VALIDATION_ERROR, "page: must be 0 or greater");
-        }
-        if (size < 1) {
-            throw new ApiException(ErrorCode.VALIDATION_ERROR, "size: must be 1 or greater");
-        }
+        // Tạm thời fix cứng lọc trạng thái PUBLISHED cho học viên (chưa áp dụng phân quyền RBAC)
+        var coursePage = courseRepository.findCoursesByFilters(normalizedKeyword, category, CourseStatus.PUBLISHED, pageable);
 
-        UserRole role = currentRole();
-        Specification<Course> spec = Specification.unrestricted();
-        if (keyword != null && !keyword.isBlank()) {
-            spec = spec.and(CourseSpecifications.titleContains(keyword.trim()));
-        }
-        if (category != null && !category.isBlank()) {
-            spec = spec.and(CourseSpecifications.hasCategory(category.trim()));
-        }
-
-        if (role == UserRole.ADMIN) {
-            if (status != null) {
-                spec = spec.and(CourseSpecifications.hasStatus(status));
-            }
-            if (mine) {
-                spec = spec.and(CourseSpecifications.ownedBy(currentUser().getId()));
-            }
-        } else if (role == UserRole.INSTRUCTOR && mine) {
-            spec = spec.and(CourseSpecifications.ownedBy(currentUser().getId()));
-        } else {
-            spec = spec.and(CourseSpecifications.hasStatus(CourseStatus.PUBLISHED));
-        }
-
-        Pageable pageable = PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE),
-                Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by("id")));
-        Page<Course> coursePage = courseRepository.findAll(spec, pageable);
-
-        List<UUID> courseIds = coursePage.getContent().stream().map(Course::getId).toList();
-        Map<UUID, Long> lessonCounts = courseIds.isEmpty()
-                ? Map.of()
-                : lessonRepository.countByCourseIds(courseIds).stream()
-                        .collect(Collectors.toMap(LessonRepository.LessonCount::getCourseId,
-                                LessonRepository.LessonCount::getLessonCount));
-
-        List<CourseCatalogResponse> items = coursePage.getContent().stream()
-                .map(course -> new CourseCatalogResponse(
-                        course.getId(),
-                        course.getTitle(),
-                        course.getDescription(),
-                        course.getCategory(),
-                        course.getStatus(),
-                        course.getInstructor() == null
-                                ? null
-                                : new InstructorSummary(course.getInstructor().getId(), course.getInstructor().getFullName()),
-                        lessonCounts.getOrDefault(course.getId(), 0L).intValue()
-                ))
+        // Chuyển đổi từ Entity sang DTO Catalog
+        var items = coursePage.getContent().stream()
+                .map(course -> {
+                    int lessonCount = lessonRepository.countByCourseId(course.getId());
+                    return new CourseCatalogResponse(
+                            course.getId(),
+                            course.getTitle(),
+                            course.getDescription(),
+                            course.getCategory(),
+                            course.getStatus(),
+                            null, // Cập nhật thành course.getInstructor().getId() khi gộp nhánh
+                            lessonCount
+                    );
+                })
                 .toList();
 
+        // Đóng gói vào PageResponse chuẩn của team
         return new PageResponse<>(
                 items,
                 coursePage.getNumber(),
@@ -153,30 +111,7 @@ public class CourseService {
                 coursePage.getTotalPages()
         );
     }
-
-    private UserRole currentRole() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            throw new ApiException(ErrorCode.UNAUTHORIZED, "Unauthorized");
-        }
-        for (GrantedAuthority authority : authentication.getAuthorities()) {
-            String name = authority.getAuthority();
-            if (name != null && name.startsWith("ROLE_")) {
-                try {
-                    return UserRole.valueOf(name.substring("ROLE_".length()));
-                } catch (IllegalArgumentException ignored) {
-                }
-            }
-        }
-        throw new ApiException(ErrorCode.FORBIDDEN, "Forbidden");
-    }
-
-    private User currentUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "User not found"));
-    }
-
+    
     public CourseResponse getCourseDetails(UUID courseId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found")); // Đổi thành AppException sau

@@ -8,7 +8,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 
@@ -44,11 +43,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex){
         log.debug("Unreadable request body: {}", ex.getMessage());
         return errorResponse(ErrorCode.VALIDATION_ERROR, "Malformed or unreadable request body");
-    }
-
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiResponse<?>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        return errorResponse(ErrorCode.VALIDATION_ERROR, ex.getName() + ": invalid value");
     }
 
     @ExceptionHandler(Exception.class)

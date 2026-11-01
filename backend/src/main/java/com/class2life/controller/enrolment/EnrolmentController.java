@@ -19,7 +19,7 @@ public class EnrolmentController {
     @PostMapping("/courses/{courseId}/enrolment")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<EnrolmentResponse> enrol(@PathVariable UUID courseId) {
-        return new ApiResponse<>(true, "Enrolled successfully", enrolmentService.enrol(courseId));
+        return new ApiResponse<EnrolmentResponse>(true, "Enrol Successfully", EnrolmentResponse.from(enrolmentService.enrol(courseId)));
     }
 
     @GetMapping("/enrolments")
