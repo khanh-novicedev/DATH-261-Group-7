@@ -1,5 +1,6 @@
 package com.class2life.entity.enrolment;
 import jakarta.persistence.*;
+import com.class2life.entity.course.Lesson;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -15,14 +16,11 @@ public class LessonProgress {
       @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "enrolment_id", nullable = false)
       private Enrolment enrolment;
-
-      /*
       
       @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "lesson_id", nullable = false)
       private Lesson lesson;
 
-      */
 
       @Column(name = "is_completed", nullable = false)
       private Boolean isCompleted = false;
@@ -69,8 +67,6 @@ public class LessonProgress {
       public void setCompletedAt(LocalDateTime completedAt) {
             this.completedAt = completedAt;
       }
-
-      /*
       
       public Lesson getLesson() {
             return lesson;
@@ -79,7 +75,5 @@ public class LessonProgress {
       public void setLesson(Lesson lesson) {
             this.lesson = lesson;
       }
-
-      */
 
 }

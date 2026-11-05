@@ -3,6 +3,8 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.class2life.entity.course.Lesson;
+import com.class2life.entity.user.User;
 
 @Entity 
 @Table(name = "lesson_qna")
@@ -13,7 +15,6 @@ public class LessonQna {
       @Column(name = "id", nullable = false)
       private UUID id;
 
-      /*
       
       @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "lesson_id", nullable = false)
@@ -23,7 +24,6 @@ public class LessonQna {
       @JoinColumn(name = "author_id", nullable = false)
       private User author;
 
-      */
 
       @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "parent_id")
@@ -74,8 +74,6 @@ public class LessonQna {
       public void setCreatedAt(LocalDateTime createdAt) {
             this.createdAt = createdAt;
       }
-
-      /*
       
       public Lesson getLesson() {
             return lesson;
@@ -92,7 +90,5 @@ public class LessonQna {
       public void setAuthor(User author) {
             this.author = author;
       }
-
-      */
 
 }

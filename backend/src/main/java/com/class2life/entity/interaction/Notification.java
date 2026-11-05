@@ -1,4 +1,5 @@
 package com.class2life.entity.interaction;
+import com.class2life.entity.user.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -15,14 +16,10 @@ public class Notification {
       @GeneratedValue(strategy = GenerationType.UUID)
       @Column(name = "id", nullable = false)
       private UUID id;
-
-      /*
       
       @ManyToOne(fetch = FetchType.LAZY)
       @JoinColumn(name = "user_id", nullable = false)
       private User user;
-
-      */
 
       @Enumerated(EnumType.STRING)
       @JdbcTypeCode(SqlTypes.NAMED_ENUM)
@@ -86,8 +83,6 @@ public class Notification {
       public void setCreatedAt(LocalDateTime createdAt) {
             this.createdAt = createdAt;
       }
-
-      /*
       
       public User getUser() {
             return user;
@@ -96,7 +91,5 @@ public class Notification {
       public void setUser(User user) {
             this.user = user;
       }
-
-      */
 
 }
