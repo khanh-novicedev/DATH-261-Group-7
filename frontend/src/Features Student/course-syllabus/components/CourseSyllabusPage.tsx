@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { BookOpen, User, Users } from 'lucide-react'
-import { Breadcrumb, Button, Card, CardTitle, IconStat, PageHeading, ProgressBar } from '@shared/components'
+import { errorMessage } from '@shared/api'
+import { Banner, Breadcrumb, Button, Card, CardTitle, IconStat, PageHeading, ProgressBar } from '@shared/components'
 import { useSyllabus } from '../hooks/useSyllabus'
 import { itemRoute } from './itemRoute'
 import { LessonRow } from './LessonRow'
@@ -8,13 +9,14 @@ import { LessonRow } from './LessonRow'
 export function CourseSyllabusPage() {
   const { courseId = '' } = useParams()
   const navigate = useNavigate()
-  const { data, loading } = useSyllabus(courseId)
+  const { data, loading, error } = useSyllabus(courseId)
 
+  if (error) return <Banner tone="danger">{errorMessage(error)}</Banner>
   if (loading || !data) return <p className="text-sm text-slate-500">Loading…</p>
 
   const { course, items } = data
   const done = items.filter((i) => i.status === 'done').length
-  const pct = Math.round((done / items.length) * 100)
+  const pct = items.length ? Math.round((done / items.length) * 100) : 0
   const current = items.find((i) => i.status === 'current') ?? items.find((i) => i.status === 'todo')
   const liveCount = items.filter((i) => i.type === 'LIVE_PRACTICE').length
 
@@ -24,7 +26,7 @@ export function CourseSyllabusPage() {
 
       <PageHeading
         title={course.title}
-        subtitle={`${course.instructor.fullName} · ${items.length} lessons · ${liveCount} live practice`}
+        subtitle={`${course.category ? `${course.category} · ` : ''}${items.length} lessons · ${liveCount} live practice`}
         actions={
           <>
             <div className="w-[180px] space-y-1.5">
@@ -36,12 +38,25 @@ export function CourseSyllabusPage() {
               </div>
               <ProgressBar value={pct} />
             </div>
-            {current && (
+            {current && data.isEnrolled && (
               <Button onClick={() => navigate(itemRoute(course.id, current))}>Continue lesson {current.sequenceNumber}</Button>
             )}
           </>
         }
       />
+
+      {!data.isEnrolled && (
+        <Banner
+          tone="warning"
+          action={
+            <Button size="sm" onClick={() => navigate(`/student/catalog/${course.id}`)}>
+              Enrol
+            </Button>
+          }
+        >
+          You are not enrolled in this course yet.
+        </Banner>
+      )}
 
       <div className="flex gap-6">
         <Card className="flex-1 overflow-hidden">
@@ -49,6 +64,7 @@ export function CourseSyllabusPage() {
             <CardTitle>Course content</CardTitle>
             <span className="text-sm text-slate-500">{items.length} lessons</span>
           </div>
+          {items.length === 0 && <p className="px-4 pb-4 pt-2 text-sm text-slate-500">No lessons have been added yet.</p>}
           {items.map((item) => (
             <LessonRow key={item.lessonId} item={item} to={itemRoute(course.id, item)} />
           ))}

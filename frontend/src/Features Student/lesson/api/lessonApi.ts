@@ -1,8 +1,8 @@
 import { mockResponse } from '@shared/utils'
 import type { LessonDetail, QnaPost, QnaThread } from '../types'
 
-const learner = (n: number) => ({ id: `u-${n}`, fullName: 'User name', role: 'LEARNER' as const })
-const instructor = { id: 'u-instructor-1', fullName: 'Instructor name', role: 'INSTRUCTOR' as const }
+const learner = (n: number) => ({ id: `u-${n}`, fullName: 'User name', role: 'STUDENT' as const })
+const instructor = { id: 'u-instructor-1', fullName: 'Instructor name', role: 'TEACHER' as const }
 const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString()
 
 const COURSE_LESSONS = 8

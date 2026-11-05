@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import axios from 'axios';
 import type { NewCourseInput } from '../types/course';
 
 interface CreateCourseModalProps {
   onClose: () => void;
-  onCreate: (input: NewCourseInput) => void;
+  onCreate: (input: NewCourseInput) => Promise<void> | void;
 }
 
 const FOCUSABLE = 'button:not([disabled]), input, textarea, [href], [tabindex]:not([tabindex="-1"])';
@@ -12,6 +13,7 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -54,7 +56,7 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
@@ -62,14 +64,43 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
       nameRef.current?.focus();
       return;
     }
-    onCreate({ name: trimmed, description: description.trim() });
+
+    try {
+      setIsSubmitting(true);
+      setError('');
+      await onCreate({ name: trimmed, description: description.trim() });
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response) {
+        const status = err.response.status;
+        const data = err.response.data;
+
+        switch (status) {
+          case 400:
+            console.error('[CreateCourse] 400 VALIDATION_ERROR:', data);
+            setError('Invalid course data. Please check title and course details.');
+            break;
+          case 403:
+            console.error('[CreateCourse] 403 FORBIDDEN – Only instructors can create courses:', data);
+            setError('Permission denied. Only instructors are allowed to create courses.');
+            break;
+          default:
+            console.error(`[CreateCourse] HTTP ${status} error:`, data);
+            setError(`Failed to create course (HTTP ${status}). Please try again.`);
+        }
+      } else {
+        console.error('[CreateCourse] Network or unexpected error:', err);
+        setError('Network error. Unable to connect to the server. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div
       className="td-overlay"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget && !isSubmitting) onClose();
       }}
       onKeyDown={handleKeyDown}
     >
@@ -84,7 +115,13 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
           <h2 id={titleId} className="td-modal__title">
             Create Course
           </h2>
-          <button type="button" className="td-modal__close" aria-label="Close" onClick={onClose}>
+          <button
+            type="button"
+            className="td-modal__close"
+            aria-label="Close"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
             X
           </button>
         </div>
@@ -101,6 +138,7 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
             placeholder="Enter the name..."
             maxLength={100}
             value={name}
+            disabled={isSubmitting}
             onChange={(e) => {
               setName(e.target.value);
               if (error) setError('');
@@ -125,15 +163,25 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
             rows={3}
             maxLength={500}
             value={description}
+            disabled={isSubmitting}
             onChange={(e) => setDescription(e.target.value)}
           />
 
           <div className="td-modal__actions">
-            <button type="button" className="td-btn td-btn--ghost" onClick={onClose}>
+            <button
+              type="button"
+              className="td-btn td-btn--ghost"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
               Cancel
             </button>
-            <button type="submit" className="td-btn td-btn--modal">
-              Create
+            <button
+              type="submit"
+              className="td-btn td-btn--modal"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Creating...' : 'Create'}
             </button>
           </div>
         </form>

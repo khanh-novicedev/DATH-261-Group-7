@@ -12,11 +12,14 @@ function RootRedirect() {
     return <Navigate to="/landing" replace />
   }
 
-  switch (user.role) {
+  const role = user.role?.toUpperCase()
+  switch (role) {
     case 'ADMIN':
       return <Navigate to="/admin" replace />
+    case 'INSTRUCTOR':
     case 'TEACHER':
       return <Navigate to="/teacher" replace />
+    case 'LEARNER':
     case 'STUDENT':
       return <Navigate to="/student" replace />
     default:
