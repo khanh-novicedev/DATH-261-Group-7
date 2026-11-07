@@ -17,6 +17,7 @@ export interface Course {
   title: string;
   instructor: string;
   description: string;
+  category?: string;
   students: number;
   forumThreads: number;
   unansweredThreads: number;
@@ -26,6 +27,7 @@ export interface Course {
 export interface NewCourseInput {
   name: string;
   description: string;
+  category?: string;
 }
 
 export interface Announcement {

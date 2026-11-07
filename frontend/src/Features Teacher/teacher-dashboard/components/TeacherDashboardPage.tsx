@@ -1,9 +1,16 @@
 import { useState } from "react";
 import { useAuth } from "@shared/context";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../Shared/context";
 import { MOCK_ANNOUNCEMENTS, MOCK_USER } from "../api/mockCourses";
+import {
+  createCourse,
+  isServerCourseId,
+  updateCourse,
+} from "../api/courseApi";
 import { useCourses } from "../hooks/useCourses";
 import type {
+  Course,
   ForumAnswer,
   ForumQuestion,
   Lesson,
@@ -114,6 +121,8 @@ const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 export function TeacherDashboardPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const teacherName = user?.fullName ?? MOCK_USER.name;
 
   const view = getViewFromPath(location.pathname);
 
@@ -121,11 +130,17 @@ export function TeacherDashboardPage() {
     navigate(getPathFromView(nextView));
   };
 
-  const { user } = useAuth();
-  const currentUserName = user?.fullName || MOCK_USER.name;
-  const { courses, addCourse, addLesson, updateLesson, deleteLesson } =
-    useCourses();
+  const {
+    courses,
+    addCourse,
+    updateCourseDetails,
+    addLesson,
+    updateLesson,
+    deleteLesson,
+  } =
+    useCourses(undefined, teacherName);
   const [creating, setCreating] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [forumCreatedFor, setForumCreatedFor] = useState<string[]>([]);
   const [forumQuestions, setForumQuestions] = useState<ForumQuestion[]>([]);
   const [creatingLessonFor, setCreatingLessonFor] = useState<string | null>(
@@ -156,9 +171,17 @@ export function TeacherDashboardPage() {
   const goToCourses = () => setView({ name: "courses" });
 
   const handleCreate = async (input: NewCourseInput) => {
-    await addCourse(input);
+    const courseId = await createCourse(input);
+    addCourse(input, courseId);
     setCreating(false);
     setView({ name: "courses" });
+  };
+
+  const handleUpdateCourse = async (input: NewCourseInput) => {
+    if (!editingCourse) return;
+    await updateCourse(editingCourse.id, input);
+    updateCourseDetails(editingCourse.id, input);
+    setEditingCourse(null);
   };
 
   const handleCreateForum = (courseId: string) => {
@@ -269,7 +292,7 @@ export function TeacherDashboardPage() {
 
     const answer: ForumAnswer = {
       id: makeId(),
-      author: MOCK_USER.name,
+      author: teacherName,
       body: body.trim(),
       createdAt: now,
     };
@@ -295,7 +318,7 @@ export function TeacherDashboardPage() {
           : {
               ...question,
               answers: question.answers.map((answer) =>
-                answer.id === answerId && answer.author === MOCK_USER.name
+                answer.id === answerId && answer.author === teacherName
                   ? {
                       ...answer,
                       body: body.trim(),
@@ -317,7 +340,7 @@ export function TeacherDashboardPage() {
               ...question,
               answers: question.answers.filter(
                 (answer) =>
-                  answer.id !== answerId || answer.author !== MOCK_USER.name,
+                  answer.id !== answerId || answer.author !== teacherName,
               ),
             },
       ),
@@ -333,7 +356,7 @@ export function TeacherDashboardPage() {
   ) => {
     const reply: QnaReply = {
       id: makeId(),
-      author: MOCK_USER.name,
+      author: teacherName,
       message,
       createdAt: new Date().toISOString(),
       fileName: file?.name,
@@ -372,7 +395,7 @@ export function TeacherDashboardPage() {
               ? "qa-reports"
               : "courses"
         }
-        userName={currentUserName}
+        userName={teacherName}
         onDashboard={goToDashboard}
         onMyCourses={goToCourses}
         onQAReports={() => setView({ name: "qa-reports" })}
@@ -384,7 +407,7 @@ export function TeacherDashboardPage() {
           questions={forumQuestions.filter(
             (question) => question.courseId === course.id,
           )}
-          currentUser={currentUserName}
+          currentUser={teacherName}
           onBack={() => setView({ name: "course", courseId: course.id })}
           onAddAnswer={handleAddAnswer}
           onEditAnswer={handleEditAnswer}
@@ -443,7 +466,9 @@ export function TeacherDashboardPage() {
       ) : showCourse && course ? (
         <CoursePageView
           course={course}
+          canEditCourse={isServerCourseId(course.id)}
           onBack={goToCourses}
+          onEditCourse={() => setEditingCourse(course)}
           hasForum={forumCreatedFor.includes(course.id)}
           onCreateForum={() => handleCreateForum(course.id)}
           onOpenForum={() => setView({ name: "forum", courseId: course.id })}
@@ -463,21 +488,21 @@ export function TeacherDashboardPage() {
       ) : view.name === "courses" ? (
         <MyCoursesView
           courses={courses}
-          userName={currentUserName}
+          userName={teacherName}
           onNewCourse={() => setCreating(true)}
           onOpenCourse={(courseId) => setView({ name: "course", courseId })}
         />
       ) : view.name === "qa-reports" ? (
         <QnaReportView
           items={qaItems}
-          currentUser={currentUserName}
+          currentUser={teacherName}
           onToggleStatus={handleToggleQnaStatus}
           onReply={handleQnaReply}
         />
       ) : (
         <DashboardView
           announcements={MOCK_ANNOUNCEMENTS}
-          userName={currentUserName}
+          userName={teacherName}
           courses={courses}
           unresolvedQaReports={
             qaItems.filter((item) => item.status === "unresolved").length
@@ -495,6 +520,19 @@ export function TeacherDashboardPage() {
         <CreateCourseModal
           onClose={() => setCreating(false)}
           onCreate={handleCreate}
+        />
+      )}
+
+      {editingCourse && (
+        <CreateCourseModal
+          mode="edit"
+          initialCourse={{
+            name: editingCourse.title,
+            description: editingCourse.description,
+            category: editingCourse.category,
+          }}
+          onClose={() => setEditingCourse(null)}
+          onCreate={handleUpdateCourse}
         />
       )}
 

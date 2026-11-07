@@ -11,7 +11,7 @@ export interface ProtectedRouteProps {
 
 export function ProtectedRoute({
   allowedRoles,
-  redirectTo = '/student/dashboard',
+  redirectTo = '/login',
   children,
 }: ProtectedRouteProps) {
   const { user } = useAuth()

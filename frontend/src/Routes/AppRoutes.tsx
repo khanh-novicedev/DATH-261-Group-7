@@ -5,11 +5,12 @@ import { LandingPage, AuthenPage } from '@common'
 import { StudentRoutes } from './StudentRoutes'
 import { TeacherRoutes } from './TeacherRoutes'
 import { AdminRoutes } from './AdminRoutes'
+import { ProtectedRoute } from './ProtectedRoute'
 
 function RootRedirect() {
   const { user } = useAuth()
   if (!user) {
-    return <Navigate to="/landing" replace />
+    return <Navigate to="/login" replace />
   }
 
   const role = user.role?.toUpperCase()
@@ -43,13 +44,34 @@ export function AppRoutes() {
       <Route path="/profile" element={<ProfilePage />} />
 
       {/* Student pages */}
-      <Route path="/student/*" element={<StudentRoutes />} />
+      <Route
+        path="/student/*"
+        element={
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <StudentRoutes />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Teacher pages */}
-      <Route path="/teacher/*" element={<TeacherRoutes />} />
+      <Route
+        path="/teacher/*"
+        element={
+          <ProtectedRoute allowedRoles={['TEACHER']}>
+            <TeacherRoutes />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Admin pages */}
-      <Route path="/admin/*" element={<AdminRoutes />} />
+      <Route
+        path="/admin/*"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <AdminRoutes />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Unknown URLs fallback */}
       <Route path="*" element={<RootRedirect />} />

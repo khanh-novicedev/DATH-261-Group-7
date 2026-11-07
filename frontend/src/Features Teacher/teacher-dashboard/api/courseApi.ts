@@ -1,49 +1,60 @@
-import { apiClient } from '@shared/api'
+import { apiClient } from "../../../Shared/api";
+import type { NewCourseInput } from "../types/course";
 
-
-export interface CreateLessonPayload {
-  sequenceNumber: number
-  title: string
-  type: 'VIDEO' | 'TEXT' | 'LIVE_PRACTICE'
-  contentUrl?: string
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T | null;
+  errorCode?: string;
 }
 
-export interface CreateCoursePayload {
-  title: string
-  description?: string
-  category?: string
-  prerequisites?: string
-  status?: 'DRAFT' | 'PUBLISHED'
-  lessons?: CreateLessonPayload[]
+interface CreatedCourseResponse {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
 }
 
-export interface CreatedLessonResponse {
-  id: string
-  sequenceNumber: number
-  title: string
-  type: 'VIDEO' | 'TEXT' | 'LIVE_PRACTICE'
-  contentUrl?: string
+export async function createCourse(input: NewCourseInput): Promise<string> {
+  const { data: response } = await apiClient.post<
+    ApiResponse<CreatedCourseResponse>
+  >("/courses", {
+    title: input.name,
+    description: input.description,
+    category: input.category?.trim() || null,
+    lessons: [],
+  });
+
+  if (!response.success || !response.data?.id) {
+    throw new Error(
+      response.message || "The server returned an invalid course response.",
+    );
+  }
+
+  return response.data.id;
 }
 
-export interface CourseDetailResponse {
-  id: string
-  instructorId?: string
-  title: string
-  description?: string
-  category?: string
-  status: 'DRAFT' | 'PUBLISHED' | 'HIDDEN'
-  lessons?: CreatedLessonResponse[]
-  createdAt?: string
-  updatedAt?: string
+export async function updateCourse(
+  courseId: string,
+  input: NewCourseInput,
+): Promise<void> {
+  const { data: response } = await apiClient.put<
+    ApiResponse<CreatedCourseResponse>
+  >(`/courses/${encodeURIComponent(courseId)}`, {
+    title: input.name,
+    description: input.description,
+    category: input.category?.trim() || null,
+    prerequisites: null,
+    lessons: null,
+  });
+
+  if (!response.success || !response.data?.id) {
+    throw new Error(
+      response.message || "The server returned an invalid course response.",
+    );
+  }
 }
 
-export interface CreateCourseResponse {
-  success: boolean
-  message: string
-  data: CourseDetailResponse
-}
-
-export async function createCourseApi(payload: CreateCoursePayload): Promise<CreateCourseResponse> {
-  const response = await apiClient.post<CreateCourseResponse>('/courses', payload)
-  return response.data
+export function isServerCourseId(id: string): boolean {
+  return /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i.test(id);
 }

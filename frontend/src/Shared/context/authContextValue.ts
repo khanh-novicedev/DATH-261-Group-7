@@ -1,5 +1,5 @@
-import { createContext, useContext } from 'react'
-import type { UserSummary } from '@shared/types'
+import { createContext, useContext, type Dispatch, type SetStateAction } from "react";
+import type { UserSummary } from "@shared/types";
 
 export interface AuthContextValue {
   user: UserSummary | null
@@ -14,5 +14,5 @@ export const AuthContext = createContext<AuthContextValue>({
 })
 
 export function useAuth() {
-  return useContext(AuthContext)
+  return useContext(AuthContext);
 }

@@ -1,13 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react';
+import axios from 'axios';
+import { apiClient } from '../Shared/api';
+import { useAuth } from '../Shared/context';
 import { CommonHeader } from './components/LandingPageHeader';
 import { useAuth } from '@shared/context';
 import { loginApi } from '@shared/api';
 import type { UserRole } from '@shared/types';
 import axios from 'axios';
+import type { UserSummary } from '../Shared/types';
 
 export type AuthMode = 'signup' | 'login' | 'reset';
+
+interface LoginResponse {
+  accessToken: string;
+  user: {
+    id: string;
+    fullName: string;
+    role: 'ADMIN' | 'INSTRUCTOR' | 'LEARNER';
+  };
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T | null;
+  errorCode?: string;
+}
 
 interface AuthenPageProps {
   initialMode?: AuthMode;
@@ -17,6 +37,7 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { setUser } = useAuth();
 
   const queryMode = (searchParams.get('mode') as AuthMode) || initialMode || 'signup';
   const [mode, setMode] = useState<AuthMode>(queryMode);

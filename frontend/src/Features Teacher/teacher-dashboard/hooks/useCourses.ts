@@ -4,7 +4,15 @@ import { useAuth } from "@shared/context";
 import type { Course, NewCourseInput } from "../types/course";
 import type { Lesson } from "../types/course";
 
-export function useCourses(initial: Course[] = []) {
+function makeId(): string {
+  return `course-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** Local, in-memory course list. Newly created courses are added to the top. */
+export function useCourses(
+  initial: Course[] = MOCK_COURSES,
+  instructorName = MOCK_USER.name,
+) {
   const [courses, setCourses] = useState<Course[]>(initial);
   const { user } = useAuth();
 
@@ -55,40 +63,46 @@ export function useCourses(initial: Course[] = []) {
     );
   };
 
-  const addCourse = useCallback(
-    async (input: NewCourseInput): Promise<Course> => {
-      const response = await createCourseApi({
-        title: input.name.trim(),
-        description: input.description.trim() || undefined,
-        category: "General",
-        status: "DRAFT",
-        lessons: [],
-      });
+  const addCourse = useCallback((input: NewCourseInput, id = makeId()): Course => {
+    const course: Course = {
+      id,
+      title: input.name.trim(),
+      instructor: instructorName,
+      description: input.description.trim(),
+      category: input.category?.trim(),
+      students: 0,
+      forumThreads: 0,
+      unansweredThreads: 0,
+      lessons: [],
+    };
+    setCourses((prev) => [course, ...prev]);
+    return course;
+  }, [instructorName]);
 
-      const created = response.data;
-
-      const course: Course = {
-        id: created.id,
-        title: created.title,
-        instructor: user?.fullName || "Instructor",
-        description: created.description || "",
-        students: 0,
-        forumThreads: 0,
-        unansweredThreads: 0,
-        lessons: (created.lessons || []).map((l) => ({
-          id: l.id,
-          title: l.title,
-          type: "video",
-          detail: `Lesson ${l.sequenceNumber}`,
-          status: "not-started",
-        })),
-      };
-
-      setCourses((prev) => [course, ...prev]);
-      return course;
+  const updateCourseDetails = useCallback(
+    (courseId: string, input: NewCourseInput) => {
+      setCourses((previous) =>
+        previous.map((course) =>
+          course.id === courseId
+            ? {
+                ...course,
+                title: input.name.trim(),
+                description: input.description.trim(),
+                category: input.category?.trim(),
+              }
+            : course,
+        ),
+      );
     },
-    [user],
+    [],
   );
 
-  return { courses, addCourse, addLesson, updateLesson, deleteLesson };
+  return {
+    courses,
+    addCourse,
+    updateCourseDetails,
+    addLesson,
+    updateLesson,
+    deleteLesson,
+  };
 }
