@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AdminHeader } from '../shared/components/AdminHeader';
+import { TablePagination } from '../shared/components/TablePagination';
 import { UserFilters } from './components/UserFilters';
 import { UserTable } from './components/UserTable';
 import { UserDetail } from './components/UserDetail';
@@ -21,6 +22,12 @@ export const UserManagementPage: React.FC<UserManagementPageProps> = ({
     selectedUser,
     userToToggle,
     isModalOpen,
+    page,
+    totalPages,
+    totalElements,
+    size,
+    setSize,
+    setPage,
     handleFilterChange,
     setSelectedUser,
     promptToggleStatus,
@@ -71,6 +78,16 @@ export const UserManagementPage: React.FC<UserManagementPageProps> = ({
               users={filteredUsers}
               onViewDetail={(user) => setSelectedUser(user)}
               onToggleStatus={promptToggleStatus}
+            />
+
+            {/* Pagination Controls */}
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              size={size}
+              onPageChange={setPage}
+              onSizeChange={setSize}
             />
           </>
         )}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { FilterState, User } from '../types';
-import { fetchUsers } from '../api/userApi';
+import { fetchUsers, setUserStatus } from '../api/userApi';
 
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -13,12 +13,12 @@ export const useUserManagement = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [page, setPage] = useState(0);
-  const [size] = useState(20);
+  const [size, setSize] = useState(20);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
   const [filters, setFilters] = useState<FilterState>({
-    search: '',
+    keyword: '',
     role: 'All',
     status: 'All',
   });
@@ -31,12 +31,12 @@ export const useUserManagement = () => {
       const result = await fetchUsers({
         page,
         size,
-        keyword: filters.search || undefined,
+        keyword: filters.keyword || undefined,
         role: filters.role,
         status: filters.status,
       });
 
-      setUsers(result.users);
+      setUsers(result.items)
       setTotalElements(result.totalElements);
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
@@ -80,25 +80,73 @@ export const useUserManagement = () => {
     setPage(0);
   };
 
+  const handleSizeChange = (newSize: number) => {
+    setSize(newSize);
+    setPage(0);
+  };
+
   const promptToggleStatus = (user: User) => {
     setUserToToggle(user);
     setIsModalOpen(true);
   };
 
-  const confirmToggleStatus = () => {
+  const confirmToggleStatus = async () => {
     if (!userToToggle) return;
+    const newStatus = userToToggle.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    
+    try{
+      // CALL API
+      setUserStatus(userToToggle.id, newStatus);
+      
+      setUserToToggle(prev => (prev ? { ...prev, status: newStatus } : null));
+      
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userToToggle.id ? { ...u, status: newStatus } : u))
+      );
+  
+      if (selectedUser?.id === userToToggle.id) {
+        setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null));
+      }
 
-    const newStatus = userToToggle.status === 'Active' ? 'Suspended' : 'Active';
-
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userToToggle.id ? { ...u, status: newStatus } : u))
-    );
-
-    if (selectedUser?.id === userToToggle.id) {
-      setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null));
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response) {
+        const status = err.response.status;
+        switch (status) {
+          case 400:
+            console.error(
+              '[UserManagement] 400 VALIDATION_ERROR (including own account).',
+              err.response.data,
+            );
+            setError('Validation Error.');
+            break;
+          case 403:
+              console.error(
+                '[UserManagement] 403 FORBIDDEN.',
+                err.response.data,
+              );
+              setError('Forbidden');
+              break;
+            case 404:
+                console.error(
+                  '[UserManagement] 404 USER_NOT_FOUND.',
+                  err.response.data,
+                );
+                setError('User not found!');
+                break;
+          default:
+            console.error(
+              `[UserManagement] Unexpected HTTP ${status}`,
+              err.response.data,
+            );
+            setError(`An unexpected error occurred (HTTP ${status}).`);
+        }
+      } else {
+        console.error('[UserManagement] Network / unknown error', err);
+        setError('Unable to connect to the server. Please check your network.');
+      }
+    } finally {
+      setUserToToggle(null);
     }
-
-    setUserToToggle(null);
   };
 
   return {
@@ -113,6 +161,8 @@ export const useUserManagement = () => {
     page,
     totalPages,
     totalElements,
+    size,
+    setSize: handleSizeChange,
     handleFilterChange,
     setSelectedUser,
     promptToggleStatus,

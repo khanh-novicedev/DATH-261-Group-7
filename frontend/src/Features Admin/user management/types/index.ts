@@ -1,6 +1,6 @@
-export type UserRole = 'Student' | 'Teacher' | 'Admin';
+export type UserRole = 'Learner' | 'Instructor' | 'Admin';
 
-export type UserStatus = 'Active' | 'Suspended';
+export type UserStatus = 'ACTIVE' | 'SUSPENDED';
 
 export interface RecentLogin {
   id: string;
@@ -25,12 +25,12 @@ export interface PersonalInfo {
 
 export interface User {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
   role: UserRole;
-  joinedDate: string;
   status: UserStatus;
-  initials: string;
+  createdAt: string;
+  initials?: string;
   avatarUrl?: string;
   personalInfo?: PersonalInfo;
   recentLogins?: RecentLogin[];
@@ -38,7 +38,9 @@ export interface User {
 }
 
 export interface FilterState {
-  search: string;
-  role: 'All' | UserRole;
-  status: 'All' | UserStatus;
+  page?: number;
+  size?: number;
+  keyword?: string;
+  role?: 'All' | UserRole;
+  status?: 'All' | UserStatus;
 }

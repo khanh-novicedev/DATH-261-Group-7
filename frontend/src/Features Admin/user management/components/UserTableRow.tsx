@@ -15,7 +15,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
   onViewDetail,
   onToggleStatus,
 }) => {
-  const isSuspended = user.status === 'Suspended';
+  const isSuspended = user.status === 'SUSPENDED';
 
   return (
     <tr className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
@@ -28,7 +28,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
           {user.avatarUrl ? (
             <img
               src={user.avatarUrl}
-              alt={user.name}
+              alt={user.fullName}
               className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0"
             />
           ) : (
@@ -37,7 +37,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
             </div>
           )}
           <span className="text-sm font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
-            {user.name}
+            {user.fullName}
           </span>
         </div>
       </td>
@@ -49,7 +49,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
       <td className="px-6 py-4 text-sm text-slate-600">{user.role}</td>
 
       {/* Joined Date */}
-      <td className="px-6 py-4 text-sm text-slate-600">{user.joinedDate}</td>
+      <td className="px-6 py-4 text-sm text-slate-600">{user.createdAt}</td>
 
       {/* Account Status */}
       <td className="px-6 py-4"><StatusBadge status={user.status} /></td>

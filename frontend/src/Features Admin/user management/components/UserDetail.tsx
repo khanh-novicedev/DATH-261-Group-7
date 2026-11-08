@@ -20,7 +20,7 @@ export const UserDetail: React.FC<UserDetailProps> = ({
   onBack,
   onToggleStatus,
 }) => {
-  const isSuspended = user.status === 'Suspended';
+  const isSuspended = user.status === 'SUSPENDED';
 
   const personalInfo = user.personalInfo || {
     dateOfBirth: '—',
@@ -50,12 +50,12 @@ export const UserDetail: React.FC<UserDetailProps> = ({
         <div className="flex items-center gap-4">
           <img
             src={user.avatarUrl || defaultAvatar}
-            alt={user.name}
+            alt={user.fullName}
             className="w-20 h-20 rounded-full object-cover border-2 border-slate-200 shadow-2xs shrink-0"
           />
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              {user.name}
+              {user.fullName}
             </h1>
             <p className="text-sm text-slate-500 mt-0.5">{user.email}</p>
             <div className="mt-2">

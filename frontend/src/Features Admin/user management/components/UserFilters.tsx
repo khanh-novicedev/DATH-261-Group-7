@@ -31,8 +31,8 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const roles: ('All' | UserRole)[] = ['All', 'Student', 'Teacher', 'Admin'];
-  const statuses: ('All' | UserStatus)[] = ['All', 'Active', 'Suspended'];
+  const roles: ('All' | UserRole)[] = ['All', 'Learner', 'Instructor', 'Admin'];
+  const statuses: ('All' | UserStatus)[] = ['All', 'ACTIVE', 'SUSPENDED'];
 
   return (
     <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -41,8 +41,8 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
         <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           type="text"
-          value={filters.search}
-          onChange={(e) => onFilterChange({ search: e.target.value })}
+          value={filters.keyword}
+          onChange={(e) => onFilterChange({ keyword: e.target.value })}
           placeholder="Search users..."
           className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all shadow-2xs"
         />

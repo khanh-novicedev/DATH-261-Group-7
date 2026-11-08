@@ -7,7 +7,7 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = '' }) => {
-  const isSuspended = status === 'Suspended';
+  const isSuspended = status === 'SUSPENDED';
 
   return (
     <span

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
-import { User } from '../types';
+import { User } from '../../user management/types';
 
 /**
  * Generic confirmation modal used for user account actions (suspend/activate).
@@ -12,13 +12,16 @@ export const ConfirmModal: React.FC<{
   onClose: () => void;
   onConfirm: () => void;
 }> = ({ user, isOpen, onClose, onConfirm }) => {
+  useEffect(() => {
+    console.log(`============ Test ${user?.role}: ${user?.status}`);
+  });
   if (!isOpen || !user) return null;
 
-  const isSuspending = user.status === 'Active';
+  const isSuspending = user && user.status === 'ACTIVE';
   const title = isSuspending ? 'Suspend Account?' : 'Activate Account?';
   const msg = isSuspending
-    ? `Are you sure you want to suspend ${user.name}'s account? They will lose access to course materials and forums until reactivated.`
-    : `Are you sure you want to reactivate ${user.name}'s account? They will regain full access to their enrolled courses.`;
+    ? `Are you sure you want to suspend ${user.fullName}'s account? They will lose access to course materials and forums until reactivated.`
+    : `Are you sure you want to reactivate ${user.fullName}'s account? They will regain full access to their enrolled courses.`;
   const confirmLabel = isSuspending ? 'Confirm Suspend' : 'Confirm Activate';
   const confirmClass = isSuspending
     ? 'bg-red-600 hover:bg-red-700'
