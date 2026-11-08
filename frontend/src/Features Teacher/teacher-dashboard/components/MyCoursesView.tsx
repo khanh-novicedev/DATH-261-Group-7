@@ -5,6 +5,8 @@ import type { Course } from "../types/course";
 interface MyCoursesViewProps {
   courses: Course[];
   userName: string;
+  isLoading: boolean;
+  loadError: string;
   onNewCourse: () => void;
   onOpenCourse: (courseId: string) => void;
 }
@@ -12,6 +14,8 @@ interface MyCoursesViewProps {
 export function MyCoursesView({
   courses,
   userName,
+  isLoading,
+  loadError,
   onNewCourse,
   onOpenCourse,
 }: MyCoursesViewProps) {
@@ -67,6 +71,12 @@ export function MyCoursesView({
           </span>
         </div>
 
+        {loadError && (
+          <p className="td-course-action-error" role="alert">
+            Could not load your courses: {loadError}
+          </p>
+        )}
+
         {filteredCourses.length > 0 ? (
           <ul className="td-list">
             {filteredCourses.map((course, index) => (
@@ -80,7 +90,9 @@ export function MyCoursesView({
           </ul>
         ) : (
           <p className="td-empty">
-            {query.trim()
+            {isLoading
+              ? "Loading your courses..."
+              : query.trim()
               ? `No courses match "${query.trim()}".`
               : 'No courses yet. Select "+ New course" to create one.'}
           </p>

@@ -22,6 +22,12 @@
   max-width: 1200px;
 }
 
+.profile-page__heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .profile-page__eyebrow {
   margin: 0 0 8px;
   color: #64748b;
@@ -295,6 +301,16 @@
 
 .profile-button--secondary:hover {
   background: #f9fafb;
+}
+
+.profile-button--danger {
+  color: #b42318;
+  background: #fff;
+  border-color: #fecdca;
+}
+
+.profile-button--danger:hover {
+  background: #fef3f2;
 }
 
 .profile-message {

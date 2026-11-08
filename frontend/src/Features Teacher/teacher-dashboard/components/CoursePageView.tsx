@@ -1,13 +1,17 @@
 import { useMemo, useState } from "react";
 import { BookIcon, ChevronRightIcon, UserIcon, UsersIcon } from "./Icons";
 import { LessonRow } from "./LessonRow";
-import type { Course, Lesson } from "../types/course";
+import type { Course, Lesson, TeacherCourseStatus } from "../types/course";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 interface CoursePageViewProps {
   course: Course;
   onBack: () => void;
+  onEditCourse: () => void;
+  onDeleteCourse: () => void;
+  onChangeStatus: (status: TeacherCourseStatus) => void;
+  actionError?: string;
   hasForum: boolean;
   onCreateForum: () => void;
   onOpenForum: () => void;
@@ -20,6 +24,10 @@ interface CoursePageViewProps {
 export function CoursePageView({
   course,
   onBack,
+  onEditCourse,
+  onDeleteCourse,
+  onChangeStatus,
+  actionError,
   onNewLesson,
   onOpenLesson,
   onEditLesson,
@@ -62,8 +70,37 @@ export function CoursePageView({
             {course.instructor} · {plural(lessonCount, "lesson")} · {liveCount}{" "}
             live practice
           </p>
+          <span className={`td-course-status td-course-status--${(course.status ?? "DRAFT").toLowerCase()}`}>
+            {(course.status ?? "DRAFT").toLowerCase()}
+          </span>
         </div>
         <div className="td-topbar__actions">
+          <label className="td-course-status-control">
+            <span>Preview status</span>
+            <select
+              className="td-course-status-select"
+              value={course.status ?? "DRAFT"}
+              onChange={(event) => onChangeStatus(event.target.value as TeacherCourseStatus)}
+            >
+              <option value="DRAFT">Draft</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="HIDDEN">Hidden</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            className="td-btn td-btn--outline"
+            onClick={onEditCourse}
+          >
+            Edit course
+          </button>
+          <button
+            type="button"
+            className="td-btn td-btn--danger"
+            onClick={onDeleteCourse}
+          >
+            Delete course
+          </button>
           <button
             type="button"
             className="td-btn td-btn--primary"
@@ -81,6 +118,15 @@ export function CoursePageView({
           />
         </div>
       </div>
+
+      {actionError && (
+        <p className="td-course-action-error" role="alert">
+          {actionError}
+        </p>
+      )}
+      <p className="td-course-preview-note">
+        Status changes are a UI preview only; API-14 and API-15 are not connected yet.
+      </p>
 
       <div className="td-course-body">
         <section

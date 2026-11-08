@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { logoutApi } from "@shared/api/authApi";
+import { useAuth } from "@shared/context";
 import { ChevronDownIcon } from "./Icons";
 
 interface AppHeaderProps {
@@ -18,7 +20,21 @@ export function AppHeader({
   onQAReports,
 }: AppHeaderProps) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    logout();
+    setProfileMenuOpen(false);
+    navigate("/landing", { replace: true });
+
+    if (refreshToken) {
+      void logoutApi(refreshToken).catch((error: unknown) => {
+        console.error("Could not revoke the server refresh token during logout.", error);
+      });
+    }
+  };
 
   return (
     <header className="td-header">
@@ -83,6 +99,15 @@ export function AppHeader({
               >
                 <span aria-hidden="true">👤</span>
                 <span>My Profile</span>
+              </button>
+              <button
+                type="button"
+                className="td-user__dropdown-item"
+                role="menuitem"
+                onClick={handleLogout}
+              >
+                <span aria-hidden="true">↪</span>
+                <span>Log out</span>
               </button>
             </div>
           )}

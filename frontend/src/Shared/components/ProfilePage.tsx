@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { logoutApi } from "../api/authApi";
+import { useAuth } from "../context";
 import "../assets/profilePage.css";
 
 interface ProfileData {
@@ -20,6 +23,8 @@ const INITIAL_PROFILE: ProfileData = {
 };
 
 export function ProfilePage() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [savedProfile, setSavedProfile] =
     useState<ProfileData>(INITIAL_PROFILE);
   const [form, setForm] = useState<ProfileData>(INITIAL_PROFILE);
@@ -49,6 +54,18 @@ export function ProfilePage() {
     setShowSavedMessage(false);
   };
 
+  const handleLogout = () => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    logout();
+    navigate("/landing", { replace: true });
+
+    if (refreshToken) {
+      void logoutApi(refreshToken).catch((error: unknown) => {
+        console.error("Could not revoke the server refresh token during logout.", error);
+      });
+    }
+  };
+
   const initial = form.fullName.trim().charAt(0).toUpperCase() || "U";
 
   return (
@@ -62,18 +79,27 @@ export function ProfilePage() {
           </p>
         </div>
 
-        {!isEditing && (
+        <div className="profile-page__heading-actions">
+          {!isEditing && (
+            <button
+              className="profile-button profile-button--primary"
+              type="button"
+              onClick={() => {
+                setIsEditing(true);
+                setShowSavedMessage(false);
+              }}
+            >
+              Edit profile
+            </button>
+          )}
           <button
-            className="profile-button profile-button--primary"
+            className="profile-button profile-button--danger"
             type="button"
-            onClick={() => {
-              setIsEditing(true);
-              setShowSavedMessage(false);
-            }}
+            onClick={handleLogout}
           >
-            Edit profile
+            Log out
           </button>
-        )}
+        </div>
       </div>
 
       {showSavedMessage && (

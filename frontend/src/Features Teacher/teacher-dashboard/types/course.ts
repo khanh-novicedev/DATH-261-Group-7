@@ -1,5 +1,6 @@
 export type LessonType = "video" | "document" | "quiz" | "assignment" | "live";
 export type LessonStatus = "completed" | "in-progress" | "not-started";
+export type TeacherCourseStatus = "DRAFT" | "PUBLISHED" | "HIDDEN";
 export type QnaItemKind = "question" | "report";
 export type QnaItemStatus = "resolved" | "unresolved";
 
@@ -17,6 +18,9 @@ export interface Course {
   title: string;
   instructor: string;
   description: string;
+  category?: string;
+  prerequisites?: string;
+  status?: TeacherCourseStatus;
   students: number;
   forumThreads: number;
   unansweredThreads: number;
@@ -26,6 +30,8 @@ export interface Course {
 export interface NewCourseInput {
   name: string;
   description: string;
+  category: string;
+  prerequisites: string;
 }
 
 export interface Announcement {

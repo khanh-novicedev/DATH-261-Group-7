@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { errorMessage } from "@shared/api";
 import { useAuth } from "@shared/context";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MOCK_ANNOUNCEMENTS, MOCK_USER } from "../api/mockCourses";
@@ -6,10 +7,12 @@ import { useCourses } from "../hooks/useCourses";
 import type {
   ForumAnswer,
   ForumQuestion,
+  Course,
   Lesson,
   NewCourseInput,
   NewLessonInput,
   QuizData,
+  TeacherCourseStatus,
 } from "../types/course";
 import { AppHeader } from "./AppHeader";
 import { CoursePageView } from "./CoursePageView";
@@ -123,9 +126,21 @@ export function TeacherDashboardPage() {
 
   const { user } = useAuth();
   const currentUserName = user?.fullName || MOCK_USER.name;
-  const { courses, addCourse, addLesson, updateLesson, deleteLesson } =
-    useCourses();
+  const {
+    courses,
+    isLoading: isLoadingCourses,
+    loadError: coursesLoadError,
+    addCourse,
+    loadCourseDetails,
+    updateCourse,
+    previewCourseStatus,
+    addLesson,
+    updateLesson,
+    deleteLesson,
+  } = useCourses();
   const [creating, setCreating] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [courseActionError, setCourseActionError] = useState("");
   const [forumCreatedFor, setForumCreatedFor] = useState<string[]>([]);
   const [forumQuestions, setForumQuestions] = useState<ForumQuestion[]>([]);
   const [creatingLessonFor, setCreatingLessonFor] = useState<string | null>(
@@ -155,10 +170,47 @@ export function TeacherDashboardPage() {
   const goToDashboard = () => setView({ name: "dashboard" });
   const goToCourses = () => setView({ name: "courses" });
 
-  const handleCreate = async (input: NewCourseInput) => {
+  const handleSaveCourse = async (input: NewCourseInput) => {
+    if (editingCourse) {
+      await updateCourse(editingCourse, input);
+      setEditingCourse(null);
+      setCourseActionError("");
+      return;
+    }
+
     await addCourse(input);
     setCreating(false);
     setView({ name: "courses" });
+  };
+
+  const handleOpenCourse = (courseId: string) => {
+    setCourseActionError("");
+    setView({ name: "course", courseId });
+    void loadCourseDetails(courseId).catch((error: unknown) => {
+      setCourseActionError(errorMessage(error));
+    });
+  };
+
+  const handleEditCourse = async (courseId: string) => {
+    try {
+      setCourseActionError("");
+      const loadedCourse = await loadCourseDetails(courseId);
+      setEditingCourse(loadedCourse);
+    } catch (error: unknown) {
+      setCourseActionError(errorMessage(error));
+    }
+  };
+
+  const handleDeleteCourse = () => {
+    setCourseActionError("Delete is not connected yet (API-15). No course was removed.");
+  };
+
+  const handlePreviewCourseStatus = (
+    courseId: string,
+    status: TeacherCourseStatus,
+  ) => {
+    previewCourseStatus(courseId, status);
+    setCourseActionError("Status is shown as a local preview only (API-14 is not connected).");
   };
 
   const handleCreateForum = (courseId: string) => {
@@ -444,6 +496,10 @@ export function TeacherDashboardPage() {
         <CoursePageView
           course={course}
           onBack={goToCourses}
+          onEditCourse={() => void handleEditCourse(course.id)}
+          onDeleteCourse={handleDeleteCourse}
+          onChangeStatus={(status) => handlePreviewCourseStatus(course.id, status)}
+          actionError={courseActionError}
           hasForum={forumCreatedFor.includes(course.id)}
           onCreateForum={() => handleCreateForum(course.id)}
           onOpenForum={() => setView({ name: "forum", courseId: course.id })}
@@ -464,8 +520,10 @@ export function TeacherDashboardPage() {
         <MyCoursesView
           courses={courses}
           userName={currentUserName}
+          isLoading={isLoadingCourses}
+          loadError={coursesLoadError}
           onNewCourse={() => setCreating(true)}
-          onOpenCourse={(courseId) => setView({ name: "course", courseId })}
+          onOpenCourse={handleOpenCourse}
         />
       ) : view.name === "qa-reports" ? (
         <QnaReportView
@@ -484,7 +542,7 @@ export function TeacherDashboardPage() {
           }
           onOpenMyCourses={goToCourses}
           onOpenQaReports={() => setView({ name: "qa-reports" })}
-          onOpenCourse={(courseId) => setView({ name: "course", courseId })}
+          onOpenCourse={handleOpenCourse}
           onOpenLesson={(courseId, lessonId) =>
             setView({ name: "lesson", courseId, lessonId })
           }
@@ -494,7 +552,15 @@ export function TeacherDashboardPage() {
       {creating && (
         <CreateCourseModal
           onClose={() => setCreating(false)}
-          onCreate={handleCreate}
+          onSave={handleSaveCourse}
+        />
+      )}
+
+      {editingCourse && (
+        <CreateCourseModal
+          initialCourse={editingCourse}
+          onClose={() => setEditingCourse(null)}
+          onSave={handleSaveCourse}
         />
       )}
 

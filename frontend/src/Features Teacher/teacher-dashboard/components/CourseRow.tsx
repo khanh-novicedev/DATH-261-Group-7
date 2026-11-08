@@ -28,7 +28,12 @@ export function CourseRow({ course, tone, onOpen }: CourseRowProps) {
         <button type="button" className="td-course-row__title" onClick={open}>
           {course.title}
         </button>
-        <p className="td-course-row__sub">{course.instructor}</p>
+        <div className="td-course-row__metadata">
+          <p className="td-course-row__sub">{course.instructor}</p>
+          <span className={`td-course-status td-course-status--${(course.status ?? "DRAFT").toLowerCase()}`}>
+            {(course.status ?? "DRAFT").toLowerCase()}
+          </span>
+        </div>
       </div>
       <button type="button" className="td-btn td-btn--outline" onClick={open}>
         Continue

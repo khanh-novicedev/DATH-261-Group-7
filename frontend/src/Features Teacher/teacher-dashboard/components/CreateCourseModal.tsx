@@ -1,17 +1,21 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import axios from 'axios';
-import type { NewCourseInput } from '../types/course';
+import { errorMessage } from '@shared/api';
+import type { Course, NewCourseInput } from '../types/course';
 
 interface CreateCourseModalProps {
+  initialCourse?: Course;
   onClose: () => void;
-  onCreate: (input: NewCourseInput) => Promise<void> | void;
+  onSave: (input: NewCourseInput) => Promise<void> | void;
 }
 
 const FOCUSABLE = 'button:not([disabled]), input, textarea, [href], [tabindex]:not([tabindex="-1"])';
 
-export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+export function CreateCourseModal({ initialCourse, onClose, onSave }: CreateCourseModalProps) {
+  const isEditing = Boolean(initialCourse);
+  const [name, setName] = useState(initialCourse?.title ?? '');
+  const [description, setDescription] = useState(initialCourse?.description ?? '');
+  const [category, setCategory] = useState(initialCourse?.category ?? '');
+  const [prerequisites, setPrerequisites] = useState(initialCourse?.prerequisites ?? '');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -21,6 +25,8 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
   const titleId = `${uid}-title`;
   const nameId = `${uid}-name`;
   const descId = `${uid}-description`;
+  const categoryId = `${uid}-category`;
+  const prerequisitesId = `${uid}-prerequisites`;
   const errorId = `${uid}-error`;
 
   // Focus the first field, lock page scroll, and restore focus to the opener on close.
@@ -68,29 +74,14 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
     try {
       setIsSubmitting(true);
       setError('');
-      await onCreate({ name: trimmed, description: description.trim() });
+      await onSave({
+        name: trimmed,
+        description: description.trim(),
+        category: category.trim(),
+        prerequisites: prerequisites.trim(),
+      });
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response) {
-        const status = err.response.status;
-        const data = err.response.data;
-
-        switch (status) {
-          case 400:
-            console.error('[CreateCourse] 400 VALIDATION_ERROR:', data);
-            setError('Invalid course data. Please check title and course details.');
-            break;
-          case 403:
-            console.error('[CreateCourse] 403 FORBIDDEN – Only instructors can create courses:', data);
-            setError('Permission denied. Only instructors are allowed to create courses.');
-            break;
-          default:
-            console.error(`[CreateCourse] HTTP ${status} error:`, data);
-            setError(`Failed to create course (HTTP ${status}). Please try again.`);
-        }
-      } else {
-        console.error('[CreateCourse] Network or unexpected error:', err);
-        setError('Network error. Unable to connect to the server. Please try again.');
-      }
+      setError(errorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -113,7 +104,7 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
       >
         <div className="td-modal__header">
           <h2 id={titleId} className="td-modal__title">
-            Create Course
+            {isEditing ? 'Edit Course' : 'Create Course'}
           </h2>
           <button
             type="button"
@@ -167,6 +158,34 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
             onChange={(e) => setDescription(e.target.value)}
           />
 
+          <label className="td-modal__label" htmlFor={categoryId}>
+            Category
+          </label>
+          <input
+            id={categoryId}
+            className="td-modal__input"
+            type="text"
+            placeholder="e.g. Teamwork"
+            maxLength={100}
+            value={category}
+            disabled={isSubmitting}
+            onChange={(e) => setCategory(e.target.value)}
+          />
+
+          <label className="td-modal__label" htmlFor={prerequisitesId}>
+            Prerequisites
+          </label>
+          <textarea
+            id={prerequisitesId}
+            className="td-modal__input td-modal__textarea"
+            placeholder="Any prerequisites for learners..."
+            rows={2}
+            maxLength={500}
+            value={prerequisites}
+            disabled={isSubmitting}
+            onChange={(e) => setPrerequisites(e.target.value)}
+          />
+
           <div className="td-modal__actions">
             <button
               type="button"
@@ -181,7 +200,7 @@ export function CreateCourseModal({ onClose, onCreate }: CreateCourseModalProps)
               className="td-btn td-btn--modal"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creating...' : 'Create'}
+              {isSubmitting ? 'Saving...' : isEditing ? 'Save changes' : 'Create'}
             </button>
           </div>
         </form>
