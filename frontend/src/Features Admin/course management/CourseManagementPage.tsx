@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { /*Plus,*/ AlertCircle } from 'lucide-react';
 import { AdminHeader } from '../shared/components/AdminHeader';
+import { TablePagination } from '../shared/components/TablePagination';
 import { CourseMetrics } from './components/CourseMetrics';
 import { CourseFilters } from './components/CourseFilters';
 import { CourseTable } from './components/CourseTable';
 import { CoursePreview } from './components/CoursePreview';
-import { AddCourseModal } from './components/AddCourseModal';
+// import { AddCourseModal } from './components/AddCourseModal';
 import { DeleteCourseModal } from './components/DeleteCourseModal';
 import { useCourseManagement } from './hooks/useCourseManagement';
 
@@ -19,21 +20,31 @@ export const CourseManagementPage: React.FC<CourseManagementPageProps> = ({
   const [currentTab, setCurrentTab] = useState('Course Management');
 
   const {
-    filteredCourses,
+    courses,
     metrics,
     filters,
     selectedCourse,
-    courseToDelete,
-    isDeleteModalOpen,
-    isAddModalOpen,
+    courseToChangeStatus,
+    courseNewStatus,
+    isChangeStatusModalOpen,
+    // isAddModalOpen,
+    isLoading,
+    error,
+    page,
+    totalPages,
+    totalElements,
+    size,
+    setSize,
+    setPage,
     handleFilterChange,
     setSelectedCourse,
     handleToggleStatus,
     promptDeleteCourse,
-    confirmDeleteCourse,
-    handleAddCourse,
-    setIsDeleteModalOpen,
-    setIsAddModalOpen,
+    confirmChangeCourseStatus,
+    // handleAddCourse,
+    setIsChangeStatusModalOpen,
+    // setIsAddModalOpen,
+    setError,
   } = useCourseManagement();
 
   const handleHeaderTabChange = (tab: string) => {
@@ -51,6 +62,23 @@ export const CourseManagementPage: React.FC<CourseManagementPageProps> = ({
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Error Alert Banner */}
+        {error && (
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-center justify-between text-sm animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setError?.(null)}
+              className="text-xs font-semibold text-red-600 hover:text-red-800 underline cursor-pointer ml-4"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {selectedCourse ? (
           /* Course Preview Mode */
           <CoursePreview
@@ -74,14 +102,14 @@ export const CourseManagementPage: React.FC<CourseManagementPageProps> = ({
                 </p>
               </div>
 
-              <button
+              {/* <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-medium text-sm rounded-lg transition-colors shadow-2xs cursor-pointer self-start sm:self-auto"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Course</span>
-              </button>
+              </button> */}
             </div>
 
             {/* Metrics Section */}
@@ -94,28 +122,45 @@ export const CourseManagementPage: React.FC<CourseManagementPageProps> = ({
             />
 
             {/* Data Table */}
-            <CourseTable
-              courses={filteredCourses}
-              onPreview={(course) => setSelectedCourse(course)}
-              onToggleStatus={handleToggleStatus}
-              onDelete={promptDeleteCourse}
-            />
+            {isLoading && courses.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-sm">
+                Loading courses...
+              </div>
+            ) : (
+              <>
+                <CourseTable
+                  courses={courses}
+                  onPreview={(course) => setSelectedCourse(course)}
+                  onToggleStatus={handleToggleStatus}
+                  onDelete={promptDeleteCourse}
+                />
+                <TablePagination
+                  page={page}
+                  totalPages={totalPages}
+                  totalElements={totalElements}
+                  size={size}
+                  onPageChange={setPage}
+                  onSizeChange={setSize}
+                />
+              </>
+            )}
           </>
         )}
       </main>
 
       {/* Modals */}
-      <AddCourseModal
+      {/* <AddCourseModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddCourse={handleAddCourse}
-      />
+      /> */}
 
       <DeleteCourseModal
-        course={courseToDelete}
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={confirmDeleteCourse}
+        course={courseToChangeStatus}
+        status={courseNewStatus}
+        isOpen={isChangeStatusModalOpen}
+        onClose={() => setIsChangeStatusModalOpen(false)}
+        onConfirm={confirmChangeCourseStatus}
       />
     </div>
   );

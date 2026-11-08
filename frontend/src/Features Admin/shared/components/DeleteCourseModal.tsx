@@ -1,10 +1,7 @@
 import React from 'react';
 import { AlertTriangle, X } from 'lucide-react';
-import { Course } from '../types';
+import { Course } from '../../course management/types';
 
-/**
- * Generic delete‑confirmation modal for courses.
- */
 export const DeleteCourseModal: React.FC<{
   course: Course | null;
   isOpen: boolean;

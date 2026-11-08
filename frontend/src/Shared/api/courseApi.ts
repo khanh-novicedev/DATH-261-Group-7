@@ -58,3 +58,19 @@ export async function getMyEnrolments(): Promise<EnrolmentDto[]> {
   const list = await unwrap<RawEnrolment[] | null>(apiClient.get('/enrolments'))
   return (list ?? []).map(normalizeEnrolment).filter((e) => e.courseId)
 }
+
+export interface CourseStatusInfo {
+  id: string
+  status: CourseStatus
+}
+
+export async function updateCourseStatus(
+  courseId: string,
+  status: CourseStatus,
+): Promise<CourseStatusInfo> {
+  const response = await apiClient.patch(
+    `/courses/${courseId}/status`,
+    { status },
+  )
+  return response.data.data as CourseStatusInfo
+}

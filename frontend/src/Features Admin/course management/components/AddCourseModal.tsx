@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, BookPlus } from 'lucide-react';
-import { Course, CourseStatus } from '../types';
+import { Course } from '../types'
+import { CourseStatus } from '@shared/types';
 
 interface AddCourseModalProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
   const [title, setTitle] = useState('');
   const [instructor, setInstructor] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<CourseStatus>('Published');
+  const [status, setStatus] = useState<CourseStatus>('PUBLISHED');
 
   if (!isOpen) return null;
 
@@ -45,7 +46,7 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
     setTitle('');
     setInstructor('');
     setDescription('');
-    setStatus('Published');
+    setStatus('PUBLISHED');
     onClose();
   };
 
@@ -123,9 +124,9 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
               onChange={(e) => setStatus(e.target.value as CourseStatus)}
               className="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all cursor-pointer bg-white"
             >
-              <option value="Published">Published</option>
-              <option value="Hidden">Hidden</option>
-              <option value="Draft">Draft</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="HIDDEN">Hidden</option>
+              <option value="DRAFT">Draft</option>
             </select>
           </div>
 

@@ -1,4 +1,4 @@
-export type CourseStatus = 'Published' | 'Hidden' | 'Draft';
+import type { CourseStatus } from '@shared/types';
 
 export type LessonType =
   | 'Video'
@@ -20,6 +20,9 @@ export interface Course {
   id: string;
   title: string;
   instructor: string;
+  instructorId?: string;
+  category?: string | null;
+  lessonCount?: number;
   enrolments: number;
   completionRate: number;
   status: CourseStatus;
@@ -37,10 +40,4 @@ export interface CourseMetricsData {
   totalEnrolments: number;
   completionRate: number;
   totalCourses: number;
-}
-
-export interface CourseFilterState {
-  search: string;
-  status: 'All' | CourseStatus;
-  visibility: 'All' | CourseStatus;
 }

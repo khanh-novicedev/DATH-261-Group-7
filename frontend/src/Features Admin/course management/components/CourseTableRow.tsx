@@ -16,7 +16,7 @@ export const CourseTableRow: React.FC<CourseTableRowProps> = ({
   onToggleStatus,
   onDelete,
 }) => {
-  const isPublished = course.status === 'Published';
+  const isPublished = course.status === 'PUBLISHED';
 
   return (
     <tr className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
@@ -38,10 +38,27 @@ export const CourseTableRow: React.FC<CourseTableRowProps> = ({
             </div>
           )}
           <div className="min-w-0">
-            <h3 className="text-sm font-medium text-slate-900 group-hover:text-blue-600 transition-colors truncate">
-              {course.title}
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">{course.instructor}</p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-medium text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                {course.title}
+              </h3>
+              <span
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium shrink-0 ${
+                  course.status === 'PUBLISHED'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : course.status === 'DRAFT'
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : 'bg-slate-100 text-slate-600 border border-slate-200'
+                }`}
+              >
+                {course.status}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {course.instructor}
+              {course.category && <span> · {course.category}</span>}
+              {course.lessonCount !== undefined && <span> · {course.lessonCount} lessons</span>}
+            </p>
           </div>
         </div>
       </td>

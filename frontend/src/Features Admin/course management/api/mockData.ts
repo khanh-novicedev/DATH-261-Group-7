@@ -77,7 +77,7 @@ export const initialCourses: Course[] = [
     instructor: 'Sarah Jenkins',
     enrolments: 1240,
     completionRate: 68,
-    status: 'Published',
+    status: 'PUBLISHED',
     thumbnailUrl: reactThumb,
     description:
       "This course is designed to provide a comprehensive overview of the platform's core features and best practices for course creation. It covers everything from setting up your first lesson to managing advanced user permissions.",
@@ -98,7 +98,7 @@ export const initialCourses: Course[] = [
     instructor: 'Michael Chen',
     enrolments: 850,
     completionRate: 45,
-    status: 'Published',
+    status: 'PUBLISHED',
     thumbnailUrl: uiThumb,
     description:
       'Master the principles of visual design, spacing, typography, component hierarchies, and modern user experience patterns.',
@@ -118,7 +118,7 @@ export const initialCourses: Course[] = [
     instructor: 'David Kim',
     enrolments: 2100,
     completionRate: 82,
-    status: 'Published',
+    status: 'PUBLISHED',
     thumbnailUrl: fullstackThumb,
     description:
       'From database modeling and REST APIs to reactive frontends and deployment pipelines, build production-grade web applications from scratch.',

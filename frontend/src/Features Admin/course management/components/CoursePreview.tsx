@@ -8,6 +8,7 @@ import {
   BookOpen,
   User,
   Circle,
+  ArrowLeft,
 } from 'lucide-react';
 import { Course, Lesson, LessonType } from '../types';
 
@@ -26,8 +27,9 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
   onDelete,
   onViewMetrics,
 }) => {
-  const isPublished = course.status === 'Published';
+  const isPublished = course.status === 'PUBLISHED';
   const lessons = course.lessons || [];
+  const totalLessons = lessons.length || course.lessonCount || 0;
 
   const getLessonIcon = (type: LessonType) => {
     switch (type) {
@@ -49,7 +51,7 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm">
+      {/* <nav className="flex items-center gap-2 text-sm">
         <button
           type="button"
           onClick={onBack}
@@ -59,7 +61,18 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
         </button>
         <span className="text-slate-400 font-medium">&gt;</span>
         <span className="text-slate-900 font-medium">Course Preview</span>
-      </nav>
+      </nav> */}
+      {/* Back to Courses Button */}
+      <div>
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4 text-slate-600" />
+          <span>Back to Courses</span>
+        </button>
+      </div>
 
       {/* Header and Toolbar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -69,7 +82,7 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
             {course.title}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            {course.instructor} · {lessons.length} lessons ·{' '}
+            {course.instructor} · {totalLessons} lessons ·{' '}
             {course.livePracticesCount || 1} live practice
           </p>
         </div>
@@ -213,7 +226,7 @@ export const CoursePreview: React.FC<CoursePreviewProps> = ({
             <div className="space-y-3 pt-1">
               <div className="flex items-center gap-3 text-sm text-slate-700">
                 <BookOpen className="w-4 h-4 text-slate-500 shrink-0" />
-                <span>{lessons.length} lessons</span>
+                <span>{totalLessons} lessons</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-slate-700">
                 <Users className="w-4 h-4 text-slate-500 shrink-0" />
