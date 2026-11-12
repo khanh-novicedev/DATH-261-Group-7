@@ -20,7 +20,7 @@ export interface LessonDto {
   sequenceNumber: number
   title: string
   type: LessonType
-  contentUrl: string | null
+  contentUrl?: string | null
   createdAt?: string
   updatedAt?: string
 }
@@ -28,10 +28,13 @@ export interface LessonDto {
 export interface CourseDto {
   id: UUID
   instructorId: UUID | null
+  instructor?: InstructorSummary | null
   title: string
   description: string | null
   category: string | null
+  prerequisites?: string | null
   status: CourseStatus
+  enrolled?: boolean
   lessons: LessonDto[] | null
   createdAt?: string
   updatedAt?: string
@@ -60,12 +63,10 @@ export interface EnrolResult {
 }
 
 export interface EnrolmentDto {
-  id: UUID
-  courseId: UUID
-  courseTitle: string
+  enrolmentId: UUID
+  course: { id: UUID; title: string; category: string | null }
   completionStatus: CompletionStatus
+  progressPercent: number
   lastPositionLessonId: UUID | null
   enrolledAt: string
-  completedLessons?: number
-  totalLessons?: number
 }

@@ -1,6 +1,6 @@
 import { apiClient, unwrap } from './client'
 import type { CourseCatalogItem, CourseDto, EnrolResult, EnrolmentDto, PageResponse } from './types'
-import type { CourseStatus } from '@shared/types'
+import type { CompletionStatus, CourseStatus } from '@shared/types'
 
 export interface CatalogQuery {
   keyword?: string
@@ -34,29 +34,19 @@ export function enrol(courseId: string): Promise<EnrolResult> {
   return unwrap(apiClient.post(`/courses/${courseId}/enrolment`))
 }
 
-type RawEnrolment = Partial<EnrolmentDto> & {
-  enrolmentId?: string
-  course?: { id?: string; title?: string }
-  courseName?: string
-  lastPositionLesson?: { id?: string } | null
+const MAX_PAGE_SIZE = 100
+
+export async function getMyEnrolments(status?: CompletionStatus): Promise<EnrolmentDto[]> {
+  const data = await unwrap<PageResponse<EnrolmentDto> | EnrolmentDto[]>(
+    apiClient.get('/enrolments', { params: { status, size: MAX_PAGE_SIZE } }),
+  )
+  if (!Array.isArray(data)) return data.items
+  return status ? data.filter((e) => e.completionStatus === status) : data
 }
 
-function normalizeEnrolment(raw: RawEnrolment): EnrolmentDto {
-  return {
-    id: raw.id ?? raw.enrolmentId ?? '',
-    courseId: raw.courseId ?? raw.course?.id ?? '',
-    courseTitle: raw.courseTitle ?? raw.course?.title ?? raw.courseName ?? '',
-    completionStatus: raw.completionStatus ?? 'IN_PROGRESS',
-    lastPositionLessonId: raw.lastPositionLessonId ?? raw.lastPositionLesson?.id ?? null,
-    enrolledAt: raw.enrolledAt ?? '',
-    completedLessons: raw.completedLessons,
-    totalLessons: raw.totalLessons,
-  }
-}
-
-export async function getMyEnrolments(): Promise<EnrolmentDto[]> {
-  const list = await unwrap<RawEnrolment[] | null>(apiClient.get('/enrolments'))
-  return (list ?? []).map(normalizeEnrolment).filter((e) => e.courseId)
+export async function findMyEnrolment(courseId: string): Promise<EnrolmentDto | undefined> {
+  const enrolments = await getMyEnrolments()
+  return enrolments.find((e) => e.course.id === courseId)
 }
 
 export interface CourseStatusInfo {

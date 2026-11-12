@@ -1,11 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import { Button, Card, ProgressBar } from '@shared/components'
 import type { EnrolledCourse } from '../types'
-import { progressPercent } from './courseProgress'
 
 export function ContinueLearningCard({ enrolment }: { enrolment: EnrolledCourse }) {
   const navigate = useNavigate()
-  const pct = progressPercent(enrolment)
+  const pct = enrolment.progressPercent
   const { course, lastPositionLesson: lesson } = enrolment
 
   return (

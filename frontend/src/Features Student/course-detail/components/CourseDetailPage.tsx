@@ -53,8 +53,20 @@ export function CourseDetailPage() {
               {c.category && <Badge>{c.category}</Badge>}
               <h1 className="text-2xl font-semibold text-slate-900">{c.title}</h1>
               <p className="text-sm text-slate-600">{c.description}</p>
+              {c.instructorName && (
+                <p className="text-sm text-slate-500">
+                  Instructor: <span className="font-medium text-slate-700">{c.instructorName}</span>
+                </p>
+              )}
             </div>
           </div>
+
+          {c.prerequisites && (
+            <Card className="space-y-1.5 p-4">
+              <CardTitle>Prerequisites</CardTitle>
+              <p className="text-sm text-slate-600">{c.prerequisites}</p>
+            </Card>
+          )}
 
           <Card className="overflow-hidden">
             <div className="flex items-center justify-between px-4 pb-1 pt-3">

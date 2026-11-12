@@ -9,5 +9,5 @@ export {
   type CourseDetailResponse,
   type CreatedLessonResponse,
 } from '@teacher/teacher-dashboard/api/courseApi'
-export { getCatalog, getCourse, enrol, getMyEnrolments, type CatalogQuery, type CourseStatusInfo, updateCourseStatus } from './courseApi'
+export { getCatalog, getCourse, enrol, getMyEnrolments, findMyEnrolment, type CatalogQuery, type CourseStatusInfo, updateCourseStatus } from './courseApi'
 export type * from './types'

@@ -13,6 +13,8 @@ export interface CourseDetail {
   title: string
   description: string
   category: string | null
+  prerequisites: string | null
+  instructorName: string | null
   accent: Accent
   learnerCount: number
   outline: CourseOutlineItem[]

@@ -3,11 +3,11 @@ import { BookOpen } from 'lucide-react'
 import { Button, ProgressBar } from '@shared/components'
 import { cn } from '@shared/utils'
 import type { EnrolledCourse } from '../types'
-import { accentBg, progressPercent } from './courseProgress'
+import { accentBg } from './courseProgress'
 
 export function CourseRow({ enrolment }: { enrolment: EnrolledCourse }) {
   const navigate = useNavigate()
-  const pct = progressPercent(enrolment)
+  const pct = enrolment.progressPercent
   const { course } = enrolment
 
   return (

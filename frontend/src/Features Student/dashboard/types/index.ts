@@ -5,7 +5,7 @@ export interface EnrolledCourse {
   enrolmentId: UUID
   course: { id: UUID; title: string; category: string | null }
   completionStatus: CompletionStatus
-  completedLessons: number
+  progressPercent: number
   totalLessons: number
   lastPositionLesson: { id: UUID; sequenceNumber: number; title: string } | null
   accent: Accent
