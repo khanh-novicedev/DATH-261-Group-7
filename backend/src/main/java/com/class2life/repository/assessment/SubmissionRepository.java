@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
@@ -14,6 +15,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     // Submission history of one learner for one assignment.
     // The sort order (for example submittedAt descending) comes from the Pageable.
     Page<Submission> findByAssignmentIdAndUserId(UUID assignmentId, UUID userId, Pageable pageable);
+
+    // All submissions of one learner for one assignment, newest first (API-32, no paging)
+    List<Submission> findByAssignmentIdAndUserIdOrderBySubmittedAtDesc(UUID assignmentId, UUID userId);
 
     // Instructor view: only the most recent submission of each learner for one assignment.
     // If two submissions of the same learner have exactly the same submittedAt, both are returned.
