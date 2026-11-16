@@ -31,6 +31,7 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   UNAUTHORIZED: 'Please log in to continue.',
   VALIDATION_ERROR: 'Some fields are invalid.',
   COURSE_NOT_FOUND: 'Course not found.',
+  EMAIL_ALREADY_EXISTS: 'The provided email is already registered.',
 }
 
 function toApiError(error: AxiosError<ApiEnvelope<unknown>>): ApiError {

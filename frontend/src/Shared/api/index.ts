@@ -1,6 +1,17 @@
 export { apiClient, ApiError, errorMessage } from './client'
 export { reportContent, type ReportInput, type ReportedEntityType } from './reportApi'
-export { loginApi, type LoginRequest, type LoginResponse, type LoginUser } from './authApi'
+export {
+  loginApi,
+  logoutApi,
+  registerApi,
+  type LoginRequest,
+  type LoginResponse,
+  type LoginUser,
+  type RegisterRequest,
+  type RegisterResponse,
+  type RegisterUser,
+  type RegisterRole,
+} from './authApi'
 export {
   createCourseApi,
   type CreateCoursePayload,

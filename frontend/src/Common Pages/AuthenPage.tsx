@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, ArrowLeft, GraduationCap, School } from 'lucide-react';
 import { CommonHeader } from './components/LandingPageHeader';
 import { useAuth } from '@shared/context';
-import { loginApi } from '@shared/api';
+import { loginApi, registerApi, type RegisterRole } from '@shared/api';
 import type { UserRole } from '@shared/types';
 import axios from 'axios';
 
@@ -35,11 +35,14 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
     setSearchParams({ mode: nextMode });
     setSuccessMessage('');
     setError('');
+    setPassword('');
+    setConfirmPassword('');
   };
 
   // Form states
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState<RegisterRole>('LEARNER');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -59,8 +62,8 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
     }
 
     if (mode === 'signup') {
-      if (!username.trim()) {
-        setError('Please enter a username.');
+      if (!fullName.trim()) {
+        setError('Please enter your full name.');
         return;
       }
       if (password.length < 8) {
@@ -79,6 +82,59 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
     }
 
     setIsLoading(true);
+
+    if (mode === 'signup') {
+      try {
+        const res = await registerApi({
+          fullName: fullName.trim(),
+          email: email.trim(),
+          password,
+          role,
+        });
+
+        const createdUser = res.data;
+        setSuccessMessage(
+          `Account created successfully for ${createdUser.fullName}! Redirecting to login...`,
+        );
+        setPassword('');
+        setConfirmPassword('');
+        setTimeout(() => switchMode('login'), 1500);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err) && err.response) {
+          const status = err.response.status;
+          const errorCode: string | undefined =
+            err.response.data?.errorCode ?? err.response.data?.code;
+
+          switch (status) {
+            case 400:
+              // 400 VALIDATION_ERROR: Invalid email format, password too short, or role is ADMIN.
+              console.error('[Register] 400 VALIDATION_ERROR', err.response.data);
+              setError(
+                err.response.data?.message ??
+                  'Validation error. Please verify your email format, password length (minimum 8 characters), and role.',
+              );
+              break;
+            case 409:
+              // 409 EMAIL_ALREADY_EXISTS: The provided email is already registered.
+              console.error('[Register] 409 EMAIL_ALREADY_EXISTS', err.response.data);
+              setError('The provided email is already registered. Please log in or use another email.');
+              break;
+            default:
+              console.error(`[Register] Unexpected HTTP ${status}`, errorCode, err.response.data);
+              setError(
+                err.response.data?.message ??
+                  `Registration failed (HTTP ${status}). Please try again later.`,
+              );
+          }
+        } else {
+          console.error('[Register] Network / unknown error', err);
+          setError('Unable to connect to the server. Please check your network and try again.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
 
     if (mode === 'login') {
       try {
@@ -144,10 +200,7 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
 
     setTimeout(() => {
       setIsLoading(false);
-      if (mode === 'signup') {
-        setSuccessMessage('Account created successfully! You can now log in.');
-        setTimeout(() => switchMode('login'), 1500);
-      } else if (mode === 'reset') {
+      if (mode === 'reset') {
         setSuccessMessage('Password reset link has been dispatched to your email.');
       }
     }, 600);
@@ -233,6 +286,60 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
 
             {/* Inputs Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Role Selector (Sign up only) */}
+              {mode === 'signup' && (
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-slate-900">
+                    I want to join as
+                  </label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setRole('LEARNER')}
+                      className={`flex items-center justify-center gap-2 px-3 py-2 text-xs sm:text-sm font-medium rounded-md border transition-all cursor-pointer ${
+                        role === 'LEARNER'
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                      <span>Student</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRole('INSTRUCTOR')}
+                      className={`flex items-center justify-center gap-2 px-3 py-2 text-xs sm:text-sm font-medium rounded-md border transition-all cursor-pointer ${
+                        role === 'INSTRUCTOR'
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      <School className="w-4 h-4" />
+                      <span>Teacher</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Full Name Input (Sign up only) */}
+              {mode === 'signup' && (
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-slate-900">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="e.g. Nguyen Van A"
+                      required
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all shadow-2xs"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Email Input */}
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-slate-900">
@@ -249,25 +356,6 @@ export const AuthenPage: React.FC<AuthenPageProps> = ({ initialMode }) => {
                   />
                 </div>
               </div>
-
-              {/* Username Input (Sign up only) */}
-              {mode === 'signup' && (
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-slate-900">
-                    Username
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Your preferred username"
-                      required
-                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all shadow-2xs"
-                    />
-                  </div>
-                </div>
-              )}
 
               {/* Password Input (Login & Sign up) */}
               {(mode === 'signup' || mode === 'login') && (
