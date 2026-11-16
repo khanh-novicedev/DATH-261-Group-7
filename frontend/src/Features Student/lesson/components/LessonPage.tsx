@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { Check, Play } from 'lucide-react'
-import { Breadcrumb, Button } from '@shared/components'
+import { Banner, Breadcrumb, Button } from '@shared/components'
 import { useLesson } from '../hooks/useLesson'
 import { CourseCompletedDialog } from './CourseCompletedDialog'
 import { QnaPanel } from './QnaPanel'
@@ -11,6 +11,7 @@ export function LessonPage() {
   const l = useLesson(courseId, lessonId)
   const lesson = l.lesson
 
+  if (l.loadError) return <Banner tone="danger">{l.loadError}</Banner>
   if (l.loading || !lesson) return <p className="text-sm text-slate-500">Loading…</p>
 
   return (
@@ -36,7 +37,7 @@ export function LessonPage() {
           <h1 className="text-xl font-semibold">
             Lesson {lesson.sequenceNumber} · {lesson.title}
           </h1>
-          <p className="text-sm text-slate-600">{lesson.description}</p>
+          {l.completeError && <Banner tone="danger">{l.completeError}</Banner>}
 
           <div className="flex items-center gap-3">
             <Button
@@ -46,7 +47,12 @@ export function LessonPage() {
             >
               ← Previous
             </Button>
-            <Button className="ml-auto" variant={l.completed ? 'outline' : 'default'} disabled={l.completed} onClick={l.complete}>
+            <Button
+              className="ml-auto"
+              variant={l.completed ? 'outline' : 'default'}
+              disabled={!lesson.isEnrolled || l.completed || l.completing}
+              onClick={l.complete}
+            >
               {l.completed ? (
                 <>
                   <Check className="h-4 w-4" /> Completed

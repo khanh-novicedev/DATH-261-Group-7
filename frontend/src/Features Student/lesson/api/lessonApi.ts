@@ -1,36 +1,41 @@
+import { apiClient, findMyCourseProgress, getCourse, unwrap, type LessonDto } from '@shared/api'
 import { mockResponse } from '@shared/utils'
-import type { LessonDetail, QnaPost, QnaThread } from '../types'
+import type { LessonDetail, LessonProgressUpdate, QnaPost, QnaThread } from '../types'
 
 const learner = (n: number) => ({ id: `u-${n}`, fullName: 'User name', role: 'STUDENT' as const })
 const instructor = { id: 'u-instructor-1', fullName: 'Instructor name', role: 'TEACHER' as const }
 const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString()
 
-const COURSE_LESSONS = 8
-const specialRoutes: Record<number, string> = {
-  3: '/student/quiz/a-3',
-  5: '/student/live/s-5',
-  6: '/student/assignments/a-6',
-  8: '/student/quiz/a-8',
+function lessonRoute(courseId: string, lesson: LessonDto) {
+  if (lesson.type === 'LIVE_PRACTICE') return `/student/live/${lesson.id}`
+  return `/student/courses/${courseId}/lessons/${lesson.id}`
 }
 
-export function getLesson(courseId: string, lessonId: string): Promise<LessonDetail> {
-  const seq = Number(lessonId.replace(/\D/g, '')) || 1
-  const next = seq + 1
-  return mockResponse({
-    id: lessonId,
+export async function getLesson(courseId: string, lessonId: string): Promise<LessonDetail> {
+  const [course, progress] = await Promise.all([getCourse(courseId), findMyCourseProgress(courseId)])
+  const lessons = (course.lessons ?? []).slice().sort((a, b) => a.sequenceNumber - b.sequenceNumber)
+  const index = lessons.findIndex((l) => l.id === lessonId)
+  if (index === -1) throw new Error('Lesson not found.')
+
+  const lesson = lessons[index]
+  const next = lessons[index + 1]
+  return {
+    id: lesson.id,
     courseId,
-    courseTitle: 'Course title',
-    sequenceNumber: seq,
-    title: 'Lesson title',
-    description: 'Lesson description',
-    type: 'VIDEO' as const,
-    contentUrl: null,
-    isCompleted: false,
-    previousLessonId: seq > 1 ? `l-${seq - 1}` : null,
-    nextRoute: next > COURSE_LESSONS ? null : (specialRoutes[next] ?? `/student/courses/${courseId}/lessons/l-${next}`),
-    courseLessonCount: COURSE_LESSONS,
-    completedCount: Math.min(seq - 1, COURSE_LESSONS - 1),
-  })
+    courseTitle: course.title,
+    sequenceNumber: lesson.sequenceNumber,
+    title: lesson.title,
+    type: lesson.type,
+    contentUrl: lesson.contentUrl ?? null,
+    isEnrolled: progress !== undefined,
+    isCompleted: progress?.lessons.some((p) => p.lessonId === lesson.id && p.isCompleted) ?? false,
+    previousLessonId: lessons[index - 1]?.id ?? null,
+    nextRoute: next ? lessonRoute(courseId, next) : null,
+  }
+}
+
+export function saveLessonProgress(courseId: string, lessonId: string, isCompleted: boolean): Promise<LessonProgressUpdate> {
+  return unwrap(apiClient.put(`/courses/${courseId}/progress/lessons/${lessonId}`, { isCompleted }))
 }
 
 export function getQna(lessonId: string): Promise<QnaThread[]> {
@@ -47,9 +52,4 @@ export function getQna(lessonId: string): Promise<QnaThread[]> {
 export function postQuestion(lessonId: string, author: QnaPost['author'], content: string): Promise<QnaThread> {
   void lessonId
   return mockResponse({ id: crypto.randomUUID(), author, content, createdAt: new Date().toISOString(), parentId: null, replies: [] })
-}
-
-export function markComplete(lessonId: string, completedCount: number, total: number): Promise<{ courseCompleted: boolean }> {
-  void lessonId
-  return mockResponse({ courseCompleted: completedCount + 1 >= total })
 }

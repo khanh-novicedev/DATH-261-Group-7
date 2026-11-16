@@ -1,4 +1,4 @@
-import type { LessonType, UserSummary, UUID } from '@shared/types'
+import type { CompletionStatus, LessonType, UserSummary, UUID } from '@shared/types'
 
 export interface LessonDetail {
   id: UUID
@@ -6,14 +6,20 @@ export interface LessonDetail {
   courseTitle: string
   sequenceNumber: number
   title: string
-  description: string
   type: LessonType
   contentUrl: string | null
+  isEnrolled: boolean
   isCompleted: boolean
   previousLessonId: UUID | null
   nextRoute: string | null
-  courseLessonCount: number
-  completedCount: number
+}
+
+export interface LessonProgressUpdate {
+  completionStatus: CompletionStatus
+  completedLessons: number
+  totalLessons: number
+  progressPercent: number
+  lastPositionLessonId: UUID | null
 }
 
 export interface QnaPost {

@@ -1,5 +1,5 @@
-import { apiClient, unwrap } from './client'
-import type { CourseCatalogItem, CourseDto, EnrolResult, EnrolmentDto, PageResponse } from './types'
+import { ApiError, apiClient, unwrap } from './client'
+import type { CourseCatalogItem, CourseDto, CourseProgressDto, EnrolResult, EnrolmentDto, PageResponse } from './types'
 import type { CompletionStatus, CourseStatus } from '@shared/types'
 
 export interface CatalogQuery {
@@ -47,6 +47,21 @@ export async function getMyEnrolments(status?: CompletionStatus): Promise<Enrolm
 export async function findMyEnrolment(courseId: string): Promise<EnrolmentDto | undefined> {
   const enrolments = await getMyEnrolments()
   return enrolments.find((e) => e.course.id === courseId)
+}
+
+const NOT_ENROLLED_CODES = ['NOT_ENROLLED', 'ENROLMENT_NOT_FOUND']
+
+export function getCourseProgress(courseId: string): Promise<CourseProgressDto> {
+  return unwrap(apiClient.get(`/courses/${courseId}/progress`))
+}
+
+export async function findMyCourseProgress(courseId: string): Promise<CourseProgressDto | undefined> {
+  try {
+    return await getCourseProgress(courseId)
+  } catch (error) {
+    if (error instanceof ApiError && NOT_ENROLLED_CODES.includes(error.code)) return undefined
+    throw error
+  }
 }
 
 export interface CourseStatusInfo {
