@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { /*Plus,*/ AlertCircle } from 'lucide-react';
-import { AdminHeader } from '../shared/components/AdminHeader';
 import { TablePagination } from '../shared/components/TablePagination';
 import { CourseMetrics } from './components/CourseMetrics';
 import { CourseFilters } from './components/CourseFilters';
@@ -10,15 +9,7 @@ import { CoursePreview } from './components/CoursePreview';
 import { DeleteCourseModal } from './components/DeleteCourseModal';
 import { useCourseManagement } from './hooks/useCourseManagement';
 
-interface CourseManagementPageProps {
-  onTabChange?: (tab: string) => void;
-}
-
-export const CourseManagementPage: React.FC<CourseManagementPageProps> = ({
-  onTabChange,
-}) => {
-  const [currentTab, setCurrentTab] = useState('Course Management');
-
+export const CourseManagementPage: React.FC = () => {
   const {
     courses,
     metrics,
@@ -47,23 +38,10 @@ export const CourseManagementPage: React.FC<CourseManagementPageProps> = ({
     setError,
   } = useCourseManagement();
 
-  const handleHeaderTabChange = (tab: string) => {
-    setCurrentTab(tab);
-    onTabChange?.(tab);
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50/50 flex flex-col font-sans">
-      {/* Top Navigation Bar */}
-      <AdminHeader
-        activeTab={currentTab}
-        onTabChange={handleHeaderTabChange}
-      />
-
-      {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Error Alert Banner */}
-        {error && (
+    <div className="space-y-6">
+      {/* Error Alert Banner */}
+      {error && (
           <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-center justify-between text-sm animate-in fade-in">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
@@ -146,7 +124,6 @@ export const CourseManagementPage: React.FC<CourseManagementPageProps> = ({
             )}
           </>
         )}
-      </main>
 
       {/* Modals */}
       {/* <AddCourseModal
