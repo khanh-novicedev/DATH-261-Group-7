@@ -70,3 +70,20 @@ export interface EnrolmentDto {
   lastPositionLessonId: UUID | null
   enrolledAt: string
 }
+
+export interface LessonProgressDto {
+  lessonId: UUID
+  isCompleted: boolean
+  completedAt: string | null
+}
+
+export interface CourseProgressDto {
+  courseId: UUID
+  userId: UUID
+  completionStatus: CompletionStatus
+  completedLessons: number
+  totalLessons: number
+  progressPercent: number
+  lastPositionLessonId: UUID | null
+  lessons: LessonProgressDto[]
+}
