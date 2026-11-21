@@ -1,4 +1,4 @@
-import type { CompletionStatus, CourseStatus, LessonType, UUID } from '@shared/types'
+import type { CompletionStatus, CourseStatus, LessonType, UserRole, UUID } from '@shared/types'
 
 export interface ApiEnvelope<T> {
   success: boolean
@@ -86,4 +86,21 @@ export interface CourseProgressDto {
   progressPercent: number
   lastPositionLessonId: UUID | null
   lessons: LessonProgressDto[]
+}
+
+export interface QnaAuthor {
+  id: UUID
+  fullName: string
+  role: UserRole | null
+}
+
+export interface QnaPostDto {
+  id: UUID
+  author: QnaAuthor
+  content: string
+  createdAt: string
+}
+
+export interface QnaThreadDto extends QnaPostDto {
+  replies: QnaPostDto[]
 }

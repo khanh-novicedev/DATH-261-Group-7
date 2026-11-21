@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
-import { errorMessage } from '@shared/api'
+import { askQuestion, errorMessage, getLessonQna, type QnaThreadDto } from '@shared/api'
 import { useAsync } from '@shared/hooks'
-import { useAuth } from '@shared/context'
-import { getLesson, getQna, postQuestion, saveLessonProgress } from '../api/lessonApi'
-import type { QnaThread } from '../types'
+import { getLesson, saveLessonProgress } from '../api/lessonApi'
 
 export function useLesson(courseId: string, lessonId: string) {
-  const { user } = useAuth()
   const lesson = useAsync(() => getLesson(courseId, lessonId), [courseId, lessonId])
-  const qna = useAsync(() => getQna(lessonId), [lessonId])
-  const [threads, setThreads] = useState<QnaThread[]>([])
+  const qna = useAsync(() => getLessonQna(lessonId), [lessonId])
+  const [threads, setThreads] = useState<QnaThreadDto[]>([])
+  const [askError, setAskError] = useState<string | null>(null)
   const [completed, setCompleted] = useState(false)
   const [completing, setCompleting] = useState(false)
   const [completeError, setCompleteError] = useState<string | null>(null)
@@ -29,9 +27,15 @@ export function useLesson(courseId: string, lessonId: string) {
   }, [lesson.data])
 
   async function ask(content: string) {
-    if (!content.trim() || !user) return
-    const created = await postQuestion(lessonId, user, content.trim())
-    setThreads((t) => [...t, created])
+    setAskError(null)
+    try {
+      const created = await askQuestion(lessonId, content.trim())
+      setThreads((t) => [...t, created])
+      return true
+    } catch (error) {
+      setAskError(errorMessage(error))
+      return false
+    }
   }
 
   async function complete() {
@@ -54,6 +58,7 @@ export function useLesson(courseId: string, lessonId: string) {
     loading: lesson.loading,
     loadError: lesson.error ? errorMessage(lesson.error) : null,
     threads,
+    qnaError: askError ?? (qna.error ? errorMessage(qna.error) : null),
     ask,
     completed,
     completing,

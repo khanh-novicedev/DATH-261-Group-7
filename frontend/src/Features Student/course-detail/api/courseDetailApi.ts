@@ -1,4 +1,4 @@
-import { enrol as enrolRequest, findMyEnrolment, getCourse, type EnrolResult } from '@shared/api'
+import { apiClient, enrol as enrolRequest, findMyEnrolment, getCourse, unwrap, type EnrolResult } from '@shared/api'
 import { accentFor } from '@shared/utils'
 import type { CourseDetail } from '../types'
 
@@ -24,4 +24,8 @@ export async function getCourseDetail(courseId: string): Promise<CourseDetail> {
 
 export function enrol(courseId: string): Promise<EnrolResult> {
   return enrolRequest(courseId)
+}
+
+export function leaveCourse(courseId: string): Promise<void> {
+  return unwrap(apiClient.delete(`/courses/${courseId}/enrolment`))
 }

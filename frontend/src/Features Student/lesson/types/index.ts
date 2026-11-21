@@ -1,4 +1,4 @@
-import type { CompletionStatus, LessonType, UserSummary, UUID } from '@shared/types'
+import type { CompletionStatus, LessonType, UUID } from '@shared/types'
 
 export interface LessonDetail {
   id: UUID
@@ -20,16 +20,4 @@ export interface LessonProgressUpdate {
   totalLessons: number
   progressPercent: number
   lastPositionLessonId: UUID | null
-}
-
-export interface QnaPost {
-  id: UUID
-  author: UserSummary
-  content: string
-  createdAt: string
-  parentId: UUID | null
-}
-
-export interface QnaThread extends QnaPost {
-  replies: QnaPost[]
 }

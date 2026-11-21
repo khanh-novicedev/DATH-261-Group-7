@@ -69,7 +69,7 @@ export function LessonPage() {
           </div>
         </div>
 
-        <QnaPanel threads={l.threads} onAsk={l.ask} />
+        <QnaPanel threads={l.threads} error={l.qnaError} onAsk={l.ask} />
       </div>
 
       <CourseCompletedDialog open={l.courseCompleted} courseId={lesson.courseId} onClose={l.dismissCourseCompleted} />

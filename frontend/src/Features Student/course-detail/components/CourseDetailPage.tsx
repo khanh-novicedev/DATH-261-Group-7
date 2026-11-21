@@ -105,6 +105,9 @@ export function CourseDetailPage() {
                 <Button fullWidth onClick={goToCourse}>
                   Go to course
                 </Button>
+                <Button fullWidth variant="ghost" onClick={d.askLeave}>
+                  Leave course
+                </Button>
               </>
             ) : (
               <Button fullWidth disabled={d.enrolling} onClick={d.enrol}>
@@ -126,6 +129,23 @@ export function CourseDetailPage() {
               Stay here
             </Button>
             <Button onClick={goToCourse}>Start learning</Button>
+          </>
+        }
+      />
+
+      <Dialog
+        open={d.confirmingLeave}
+        onClose={d.cancelLeave}
+        title="Leave this course?"
+        description="Your progress in this course will be deleted."
+        footer={
+          <>
+            <Button variant="outline" onClick={d.cancelLeave}>
+              Cancel
+            </Button>
+            <Button variant="destructive" disabled={d.leaving} onClick={d.leave}>
+              {d.leaving ? 'Leaving…' : 'Leave course'}
+            </Button>
           </>
         }
       />

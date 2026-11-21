@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Flag } from 'lucide-react'
-import { Avatar, Button, Card, CardTitle, Input, ReportDialog } from '@shared/components'
-import type { QnaPost, QnaThread } from '../types'
+import type { QnaPostDto, QnaThreadDto } from '@shared/api'
+import { Avatar, Banner, Button, Card, CardTitle, Input, ReportDialog } from '@shared/components'
 
 function timeAgo(iso: string) {
   const min = Math.round((Date.now() - new Date(iso).getTime()) / 60_000)
@@ -10,9 +10,16 @@ function timeAgo(iso: string) {
   return `${Math.round(min / 60)} h ago`
 }
 
-export function QnaPanel({ threads, onAsk }: { threads: QnaThread[]; onAsk: (text: string) => Promise<void> }) {
+interface QnaPanelProps {
+  threads: QnaThreadDto[]
+  error: string | null
+  onAsk: (text: string) => Promise<boolean>
+}
+
+export function QnaPanel({ threads, error, onAsk }: QnaPanelProps) {
   const [text, setText] = useState('')
-  const [reporting, setReporting] = useState<QnaPost | null>(null)
+  const [sending, setSending] = useState(false)
+  const [reporting, setReporting] = useState<QnaPostDto | null>(null)
 
   return (
     <Card className="flex w-[360px] shrink-0 flex-col overflow-hidden">
@@ -25,6 +32,7 @@ export function QnaPanel({ threads, onAsk }: { threads: QnaThread[]; onAsk: (tex
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto px-[18px] py-4">
+        {error && <Banner tone="danger">{error}</Banner>}
         {threads.length === 0 && <p className="text-sm text-slate-500">No questions yet.</p>}
         {threads.map((t) => (
           <div key={t.id} className="space-y-2">
@@ -42,7 +50,7 @@ export function QnaPanel({ threads, onAsk }: { threads: QnaThread[]; onAsk: (tex
             {t.replies.map((r) => (
               <div key={r.id} className="space-y-1 rounded-lg bg-slate-50 px-3 py-2.5">
                 <p className="text-xs font-medium text-slate-900">
-                  {r.author.fullName} {r.author.role === 'TEACHER' && '· Instructor'}
+                  {r.author.fullName} {r.author.role === 'INSTRUCTOR' && '· Instructor'}
                 </p>
                 <p className="text-xs text-slate-600">{r.content}</p>
               </div>
@@ -55,12 +63,13 @@ export function QnaPanel({ threads, onAsk }: { threads: QnaThread[]; onAsk: (tex
         className="flex items-center gap-2 border-t border-slate-100 px-4 py-3"
         onSubmit={async (e) => {
           e.preventDefault()
-          await onAsk(text)
-          setText('')
+          setSending(true)
+          if (await onAsk(text)) setText('')
+          setSending(false)
         }}
       >
         <Input placeholder="Ask the instructor..." value={text} onChange={(e) => setText(e.target.value)} />
-        <Button type="submit" disabled={!text.trim()}>
+        <Button type="submit" disabled={!text.trim() || sending}>
           Send
         </Button>
       </form>

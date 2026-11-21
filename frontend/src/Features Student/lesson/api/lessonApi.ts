@@ -1,10 +1,5 @@
 import { apiClient, findMyCourseProgress, getCourse, unwrap, type LessonDto } from '@shared/api'
-import { mockResponse } from '@shared/utils'
-import type { LessonDetail, LessonProgressUpdate, QnaPost, QnaThread } from '../types'
-
-const learner = (n: number) => ({ id: `u-${n}`, fullName: 'User name', role: 'STUDENT' as const })
-const instructor = { id: 'u-instructor-1', fullName: 'Instructor name', role: 'TEACHER' as const }
-const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString()
+import type { LessonDetail, LessonProgressUpdate } from '../types'
 
 function lessonRoute(courseId: string, lesson: LessonDto) {
   if (lesson.type === 'LIVE_PRACTICE') return `/student/live/${lesson.id}`
@@ -36,20 +31,4 @@ export async function getLesson(courseId: string, lessonId: string): Promise<Les
 
 export function saveLessonProgress(courseId: string, lessonId: string, isCompleted: boolean): Promise<LessonProgressUpdate> {
   return unwrap(apiClient.put(`/courses/${courseId}/progress/lessons/${lessonId}`, { isCompleted }))
-}
-
-export function getQna(lessonId: string): Promise<QnaThread[]> {
-  void lessonId
-  return mockResponse([
-    {
-      id: 'qna-1', author: learner(1), content: 'Question content', createdAt: ago(10), parentId: null,
-      replies: [{ id: 'qna-1-r', author: instructor, content: 'Answer content', createdAt: ago(5), parentId: 'qna-1' }],
-    },
-    { id: 'qna-2', author: learner(2), content: 'Question content', createdAt: ago(5), parentId: null, replies: [] },
-  ])
-}
-
-export function postQuestion(lessonId: string, author: QnaPost['author'], content: string): Promise<QnaThread> {
-  void lessonId
-  return mockResponse({ id: crypto.randomUUID(), author, content, createdAt: new Date().toISOString(), parentId: null, replies: [] })
 }

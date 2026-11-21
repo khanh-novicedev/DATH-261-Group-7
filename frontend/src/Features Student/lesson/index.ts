@@ -1,2 +1,2 @@
 export { LessonPage } from './components/LessonPage'
-export type { LessonDetail, QnaThread } from './types'
+export type { LessonDetail } from './types'
