@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { errorMessage } from "@shared/api";
 import type { Lesson, LessonType, NewLessonInput } from "../types/course";
 import { MOCK_CLASSES } from "../api/mockClasses";
 
@@ -7,7 +8,7 @@ interface NewLessonModalProps {
   courseTitle: string;
   initialLesson?: Lesson;
   onClose: () => void;
-  onSave: (input: NewLessonInput) => void;
+  onSave: (input: NewLessonInput) => Promise<void> | void;
 }
 
 export function NewLessonModal({
@@ -21,13 +22,18 @@ export function NewLessonModal({
     initialLesson?.description ?? "",
   );
   const [type, setType] = useState<LessonType>(
-    initialLesson?.type ?? "document",
+    initialLesson?.type === "video" ||
+      initialLesson?.type === "document" ||
+      initialLesson?.type === "live"
+      ? initialLesson.type
+      : "document",
   );
   const [openAt, setOpenAt] = useState(initialLesson?.openAt ?? "");
   const [closeAt, setCloseAt] = useState(initialLesson?.closeAt ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [removeExistingFile, setRemoveExistingFile] = useState(false);
   const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const [accessibleClassIds, setAccessibleClassIds] = useState<string[]>(
     initialLesson?.accessibleClassIds?.length
@@ -52,11 +58,16 @@ export function NewLessonModal({
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
 
-    if (closeAt <= openAt) {
+    if (!title.trim()) {
+      setError("Lesson name is required.");
+      return;
+    }
+
+    if (openAt && closeAt && closeAt <= openAt) {
       setError("The closing time must be after the opening time.");
       return;
     }
@@ -77,20 +88,32 @@ export function NewLessonModal({
       fileUrl = initialLesson.fileUrl;
     }
 
-    onSave({
-      title: title.trim(),
-      description: description.trim(),
-      type,
-      openAt,
-      closeAt,
-      fileName,
-      fileUrl,
-      accessibleClassIds,
-    });
+    try {
+      setIsSaving(true);
+      await onSave({
+        title: title.trim(),
+        description: description.trim(),
+        type,
+        openAt,
+        closeAt,
+        fileName,
+        fileUrl,
+        accessibleClassIds,
+      });
+    } catch (err: unknown) {
+      setError(errorMessage(err));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <div className="td-lesson-modal-overlay" onMouseDown={onClose}>
+    <div
+      className="td-lesson-modal-overlay"
+      onMouseDown={() => {
+        if (!isSaving) onClose();
+      }}
+    >
       <section
         className="td-lesson-modal"
         role="dialog"
@@ -110,6 +133,7 @@ export function NewLessonModal({
             type="button"
             className="td-lesson-modal__close"
             onClick={onClose}
+            disabled={isSaving}
             aria-label="Close"
           >
             ×
@@ -125,6 +149,7 @@ export function NewLessonModal({
               onChange={(event) => setTitle(event.target.value)}
               placeholder="Enter lesson name"
               maxLength={120}
+              disabled={isSaving}
               required
             />
           </label>
@@ -136,8 +161,8 @@ export function NewLessonModal({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Explain what students should learn or do..."
-              rows={4}
-              required
+              rows={3}
+              disabled={isSaving}
             />
           </label>
 
@@ -146,6 +171,7 @@ export function NewLessonModal({
             <select
               className="td-lesson-form__input"
               value={type}
+              disabled={isSaving}
               onChange={(event) => setType(event.target.value as LessonType)}
             >
               <option value="video">Video</option>
@@ -158,25 +184,25 @@ export function NewLessonModal({
 
           <div className="td-lesson-form__time-grid">
             <label>
-              Time open
+              Time open (optional)
               <input
                 type="datetime-local"
                 className="td-lesson-form__input"
                 value={openAt}
+                disabled={isSaving}
                 onChange={(event) => setOpenAt(event.target.value)}
-                required
               />
             </label>
 
             <label>
-              Time close
+              Time close (optional)
               <input
                 type="datetime-local"
                 className="td-lesson-form__input"
                 value={closeAt}
                 min={openAt || undefined}
+                disabled={isSaving}
                 onChange={(event) => setCloseAt(event.target.value)}
-                required
               />
             </label>
           </div>
@@ -191,6 +217,7 @@ export function NewLessonModal({
               <input
                 type="checkbox"
                 checked={isAllClasses}
+                disabled={isSaving}
                 onChange={() => toggleClass("all")}
               />
               <span>All classes</span>
@@ -201,6 +228,7 @@ export function NewLessonModal({
                 <input
                   type="checkbox"
                   checked={accessibleClassIds.includes(teacherClass.id)}
+                  disabled={isSaving}
                   onChange={() => toggleClass(teacherClass.id)}
                 />
                 <span>{teacherClass.name}</span>
@@ -213,6 +241,7 @@ export function NewLessonModal({
             <input
               type="file"
               className="td-lesson-form__input"
+              disabled={isSaving}
               onChange={(event) => {
                 setFile(event.currentTarget.files?.[0] ?? null);
                 setRemoveExistingFile(false);
@@ -230,6 +259,7 @@ export function NewLessonModal({
               <input
                 type="checkbox"
                 checked={removeExistingFile}
+                disabled={isSaving}
                 onChange={(event) => {
                   setRemoveExistingFile(event.target.checked);
                   if (event.target.checked) setFile(null);
@@ -246,12 +276,21 @@ export function NewLessonModal({
               type="button"
               className="td-btn td-btn--outline"
               onClick={onClose}
+              disabled={isSaving}
             >
               Cancel
             </button>
 
-            <button type="submit" className="td-btn td-btn--primary">
-              {isEditing ? "Save changes" : "Create lesson"}
+            <button
+              type="submit"
+              className="td-btn td-btn--primary"
+              disabled={isSaving}
+            >
+              {isSaving
+                ? "Saving..."
+                : isEditing
+                  ? "Save changes"
+                  : "Create lesson"}
             </button>
           </div>
         </form>

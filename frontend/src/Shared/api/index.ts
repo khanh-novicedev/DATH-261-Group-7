@@ -1,6 +1,10 @@
-export { apiClient, ApiError, errorMessage, unwrap } from './client'
-export { getLessonQna, askQuestion } from './qnaApi'
-export { reportContent, type ReportInput, type ReportedEntityType } from './reportApi'
+export { apiClient, ApiError, errorMessage, unwrap } from "./client";
+export { getLessonQna, askQuestion } from "./qnaApi";
+export {
+  reportContent,
+  type ReportInput,
+  type ReportedEntityType,
+} from "./reportApi";
 export {
   loginApi,
   logoutApi,
@@ -12,7 +16,7 @@ export {
   type RegisterResponse,
   type RegisterUser,
   type RegisterRole,
-} from './authApi'
+} from "./authApi";
 export {
   createCourseApi,
   type CreateCoursePayload,
@@ -20,6 +24,22 @@ export {
   type CreateLessonPayload,
   type CourseDetailResponse,
   type CreatedLessonResponse,
-} from '@teacher/teacher-dashboard/api/courseApi'
-export { getCatalog, getCourse, enrol, getMyEnrolments, findMyEnrolment, getCourseProgress, findMyCourseProgress, type CatalogQuery, type CourseStatusInfo, updateCourseStatus } from './courseApi'
-export type * from './types'
+} from "@teacher/teacher-dashboard/api/courseApi";
+export {
+  getCatalog,
+  getCourse,
+  enrol,
+  getMyEnrolments,
+  findMyEnrolment,
+  getCourseProgress,
+  findMyCourseProgress,
+  type CatalogQuery,
+  type CourseStatusInfo,
+  updateCourseStatus,
+} from "./courseApi";
+export type * from "./types";
+export {
+  getLessonAssignments,
+  getAssignmentSubmissions,
+  type AssignmentSubmissionsQuery,
+} from "./assignmentApi";

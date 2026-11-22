@@ -1,11 +1,19 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  errorMessage,
+  getAssignmentSubmissions,
+  getLessonAssignments,
+  type AssignmentDto,
+  type SubmissionDto,
+} from "@shared/api";
+import { useAuth } from "@shared/context";
 import { ChevronRightIcon } from "./Icons";
-import { MOCK_CLASSES, MOCK_CLASS_STUDENTS } from "../api/mockClasses";
 import type { Course, Lesson } from "../types/course";
 
 interface AssignmentDetailViewProps {
   course: Course;
   lesson: Lesson;
+  initialAssignment?: AssignmentDto;
   onBack: () => void;
   onGoToCourses: () => void;
 }
@@ -13,59 +21,72 @@ interface AssignmentDetailViewProps {
 export function AssignmentDetailView({
   course,
   lesson,
+  initialAssignment,
   onBack,
   onGoToCourses,
 }: AssignmentDetailViewProps) {
-  const [selectedClasses, setSelectedClasses] = useState<string[]>(["all"]);
+  const { user } = useAuth();
+  const [assignment, setAssignment] = useState<AssignmentDto | null>(null);
+  const [submissions, setSubmissions] = useState<SubmissionDto[]>([]);
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "graded" | "ungraded"
+  >("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
-  const accessibleIds = lesson.accessibleClassIds?.length
-    ? lesson.accessibleClassIds
-    : ["all"];
+  useEffect(() => {
+    let active = true;
 
-  const allowedClasses = MOCK_CLASSES.filter(
-    (teacherClass) =>
-      accessibleIds.includes("all") || accessibleIds.includes(teacherClass.id),
-  );
+    async function loadAssignmentAndSubmissions() {
+      setIsLoading(true);
+      setLoadError("");
 
-  const allowedClassIds = allowedClasses.map((item) => item.id);
+      try {
+        // API-26: Lấy danh sách assignment của lesson
 
-  const students = useMemo(
-    () =>
-      MOCK_CLASS_STUDENTS.filter((student) =>
-        allowedClassIds.includes(student.classId),
-      ),
-    [allowedClassIds.join("|")],
-  );
+        const currentAssignment =
+          initialAssignment ??
+          (await getLessonAssignments(lesson.id))[0] ??
+          null;
+        setAssignment(currentAssignment);
 
-  const filteredStudents = students.filter((student) =>
-    selectedClasses.includes("all")
-      ? true
-      : selectedClasses.includes(student.classId),
-  );
+        if (!currentAssignment || !user?.id) {
+          setSubmissions([]);
+          return;
+        }
 
-  const toggleClass = (classId: string) => {
-    setSelectedClasses((previous) => {
-      if (classId === "all") return ["all"];
+        // API-30: Lấy danh sách bài nộp của assignment đó
+        const submissionPage = await getAssignmentSubmissions(
+          currentAssignment.id,
+          {
+            instructorId: user.id,
+            page: 0,
+            size: 50,
+          },
+        );
+        if (!active) return;
 
-      const selected = previous.filter((id) => id !== "all");
-
-      return selected.includes(classId)
-        ? selected.filter((id) => id !== classId)
-        : [...selected, classId];
-    });
-  };
-
-  const getStatus = (demoSubmitted: boolean) => {
-    if (demoSubmitted) return "Submitted";
-    if (lesson.closeAt && new Date(lesson.closeAt).getTime() < Date.now()) {
-      return "Overdue";
+        setSubmissions(submissionPage.items ?? []);
+      } catch (error: unknown) {
+        if (active) setLoadError(errorMessage(error));
+      } finally {
+        if (active) setIsLoading(false);
+      }
     }
-    return "Not submitted";
-  };
 
-  const submittedCount = filteredStudents.filter(
-    (student) => getStatus(student.demoSubmitted) === "Submitted",
-  ).length;
+    void loadAssignmentAndSubmissions();
+    return () => {
+      active = false;
+    };
+  }, [lesson.id, user?.id]);
+
+  const filteredSubmissions = submissions.filter((sub) => {
+    if (statusFilter === "graded") return sub.score !== null;
+    if (statusFilter === "ungraded") return sub.score === null;
+    return true;
+  });
+
+  const dueDate = assignment?.deadline ?? lesson.closeAt;
 
   return (
     <main className="td-main td-main--course td-assignment-page">
@@ -82,16 +103,24 @@ export function AssignmentDetailView({
           {course.title}
         </button>
         <ChevronRightIcon size={14} className="td-breadcrumb__sep" />
-        <span className="td-breadcrumb__current">{lesson.title}</span>
+        <span className="td-breadcrumb__current">
+          {assignment?.title ?? lesson.title}
+        </span>
       </nav>
 
       <div className="td-assignment-heading">
         <div>
           <span className="td-lesson-detail__type">Assignment</span>
-          <h1 className="td-h1">{lesson.title}</h1>
+          <h1 className="td-h1">{assignment?.title ?? lesson.title}</h1>
           <p className="td-subtitle">{course.title}</p>
         </div>
       </div>
+
+      {loadError && (
+        <p className="td-course-action-error" role="alert">
+          {loadError}
+        </p>
+      )}
 
       <div className="td-assignment-layout">
         <section className="td-card td-assignment-instructions">
@@ -99,7 +128,9 @@ export function AssignmentDetailView({
 
           <div className="td-assignment-instructions__scroll">
             <p className="td-lesson-detail__description">
-              {lesson.description || "No instructions have been added yet."}
+              {assignment?.instructions ||
+                lesson.description ||
+                "No instructions have been added yet."}
             </p>
 
             <div className="td-lesson-detail__times">
@@ -114,9 +145,7 @@ export function AssignmentDetailView({
               <div>
                 <span>Due date</span>
                 <strong>
-                  {lesson.closeAt
-                    ? new Date(lesson.closeAt).toLocaleString()
-                    : "Not set"}
+                  {dueDate ? new Date(dueDate).toLocaleString() : "Not set"}
                 </strong>
               </div>
             </div>
@@ -141,74 +170,76 @@ export function AssignmentDetailView({
           <div className="td-assignment-students__header">
             <div>
               <h2 className="td-h3">Student submissions</h2>
-              <p className="td-subtitle">
-                {submittedCount} of {filteredStudents.length} submitted
-              </p>
+              <p className="td-subtitle">{submissions.length} submitted</p>
             </div>
           </div>
 
           <div className="td-assignment-filters">
-            <strong>Filter by class</strong>
-
-            <label className="td-class-access__option">
-              <input
-                type="checkbox"
-                checked={selectedClasses.includes("all")}
-                onChange={() => toggleClass("all")}
-              />
-              <span>All classes</span>
-            </label>
-
+            <strong>Filter submissions</strong>
             <div className="td-assignment-filters__classes">
-              {allowedClasses.map((teacherClass) => (
-                <label
-                  className="td-class-access__option"
-                  key={teacherClass.id}
-                >
+              {(["all", "ungraded", "graded"] as const).map((filter) => (
+                <label className="td-class-access__option" key={filter}>
                   <input
-                    type="checkbox"
-                    checked={selectedClasses.includes(teacherClass.id)}
-                    onChange={() => toggleClass(teacherClass.id)}
+                    type="radio"
+                    name="submissionFilter"
+                    checked={statusFilter === filter}
+                    onChange={() => setStatusFilter(filter)}
                   />
-                  <span>{teacherClass.name}</span>
+                  <span>
+                    {filter === "all"
+                      ? "All"
+                      : filter === "graded"
+                        ? "Graded"
+                        : "Needs grading"}
+                  </span>
                 </label>
               ))}
             </div>
           </div>
 
           <div className="td-assignment-student-list">
-            {filteredStudents.map((student) => {
-              const status = getStatus(student.demoSubmitted);
-              const teacherClass = allowedClasses.find(
-                (item) => item.id === student.classId,
-              );
+            {isLoading ? (
+              <p className="td-empty">Loading submissions...</p>
+            ) : filteredSubmissions.length > 0 ? (
+              filteredSubmissions.map((sub) => {
+                const isGraded = sub.score !== null;
+                return (
+                  <article className="td-assignment-student" key={sub.id}>
+                    <div className="td-assignment-student__avatar">
+                      {sub.learnerName.charAt(0)}
+                    </div>
 
-              return (
-                <article className="td-assignment-student" key={student.id}>
-                  <div className="td-assignment-student__avatar">
-                    {student.name.charAt(0)}
-                  </div>
+                    <div className="td-assignment-student__info">
+                      <strong>{sub.learnerName}</strong>
+                      <span>
+                        Submitted: {new Date(sub.submittedAt).toLocaleString()}
+                        {sub.fileUrl && (
+                          <>
+                            {" · "}
+                            <a
+                              href={sub.fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              View file
+                            </a>
+                          </>
+                        )}
+                      </span>
+                    </div>
 
-                  <div className="td-assignment-student__info">
-                    <strong>{student.name}</strong>
-                    <span>{teacherClass?.name ?? "Unknown class"}</span>
-                  </div>
-
-                  <span
-                    className={`td-submission-status td-submission-status--${status
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")}`}
-                  >
-                    {status}
-                  </span>
-                </article>
-              );
-            })}
-
-            {filteredStudents.length === 0 && (
-              <p className="td-empty">
-                No students match the selected classes.
-              </p>
+                    <span
+                      className={`td-submission-status td-submission-status--${
+                        isGraded ? "submitted" : "not-submitted"
+                      }`}
+                    >
+                      {isGraded ? `Score: ${sub.score}` : "Submitted"}
+                    </span>
+                  </article>
+                );
+              })
+            ) : (
+              <p className="td-empty">No submissions found.</p>
             )}
           </div>
         </section>

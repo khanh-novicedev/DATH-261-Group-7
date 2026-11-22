@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { errorMessage } from "@shared/api";
+import type { AssignmentDto } from "@shared/api";
 import { useAuth } from "@shared/context";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MOCK_ANNOUNCEMENTS, MOCK_USER } from "../api/mockCourses";
@@ -117,6 +118,8 @@ const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 export function TeacherDashboardPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [selectedAssignment, setSelectedAssignment] =
+    useState<AssignmentDto | null>(null);
 
   const view = getViewFromPath(location.pathname);
 
@@ -133,7 +136,7 @@ export function TeacherDashboardPage() {
     addCourse,
     loadCourseDetails,
     updateCourse,
-    previewCourseStatus,
+    changeCourseStatus,
     addLesson,
     updateLesson,
     deleteLesson,
@@ -170,6 +173,18 @@ export function TeacherDashboardPage() {
   const goToDashboard = () => setView({ name: "dashboard" });
   const goToCourses = () => setView({ name: "courses" });
 
+  const activeCourseId =
+    view.name === "course" || view.name === "forum" || view.name === "lesson"
+      ? view.courseId
+      : undefined;
+
+  useEffect(() => {
+    if (!activeCourseId) return;
+    void loadCourseDetails(activeCourseId).catch((error: unknown) => {
+      setCourseActionError(errorMessage(error));
+    });
+  }, [activeCourseId, loadCourseDetails]);
+
   const handleSaveCourse = async (input: NewCourseInput) => {
     if (editingCourse) {
       await updateCourse(editingCourse, input);
@@ -202,15 +217,26 @@ export function TeacherDashboardPage() {
   };
 
   const handleDeleteCourse = () => {
-    setCourseActionError("Delete is not connected yet (API-15). No course was removed.");
+    setCourseActionError(
+      "Delete is not connected yet (API-15). No course was removed.",
+    );
   };
 
-  const handlePreviewCourseStatus = (
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const handleChangeCourseStatus = async (
     courseId: string,
     status: TeacherCourseStatus,
   ) => {
-    previewCourseStatus(courseId, status);
-    setCourseActionError("Status is shown as a local preview only (API-14 is not connected).");
+    try {
+      setIsUpdatingStatus(true);
+      setCourseActionError("");
+      await changeCourseStatus(courseId, status);
+    } catch (error: unknown) {
+      setCourseActionError(errorMessage(error));
+    } finally {
+      setIsUpdatingStatus(false);
+    }
   };
 
   const handleCreateForum = (courseId: string) => {
@@ -256,11 +282,11 @@ export function TeacherDashboardPage() {
     setView({ name: "forum", courseId });
   };
 
-  const handleSaveLesson = (input: NewLessonInput) => {
+  const handleSaveLesson = async (input: NewLessonInput) => {
     if (editingLessonFor) {
       const { courseId, lesson: oldLesson } = editingLessonFor;
 
-      updateLesson(courseId, oldLesson.id, {
+      await updateLesson(courseId, oldLesson.id, {
         ...oldLesson,
         title: input.title,
         type: input.type,
@@ -282,7 +308,7 @@ export function TeacherDashboardPage() {
 
     const courseId = creatingLessonFor;
 
-    addLesson(courseId, {
+    await addLesson(courseId, {
       id: makeId(),
       title: input.title,
       type: input.type,
@@ -300,20 +326,25 @@ export function TeacherDashboardPage() {
     setView({ name: "course", courseId });
   };
 
-  const handleDeleteLesson = (courseId: string, lessonId: string) => {
+  const handleDeleteLesson = async (courseId: string, lessonId: string) => {
     const confirmed = window.confirm(
       "Remove this lesson? This action cannot be undone.",
     );
 
     if (!confirmed) return;
 
-    deleteLesson(courseId, lessonId);
+    try {
+      setCourseActionError("");
+      await deleteLesson(courseId, lessonId);
 
-    setQuizDataByLesson((previous) => {
-      const next = { ...previous };
-      delete next[lessonId];
-      return next;
-    });
+      setQuizDataByLesson((previous) => {
+        const next = { ...previous };
+        delete next[lessonId];
+        return next;
+      });
+    } catch (error: unknown) {
+      setCourseActionError(errorMessage(error));
+    }
   };
 
   const handleAddAnswer = (questionId: string, body: string) => {
@@ -451,11 +482,18 @@ export function TeacherDashboardPage() {
         />
         ) */
       view.name === "lesson" && course && selectedLesson ? (
-        selectedLesson.type === "assignment" ? (
+        selectedAssignment || selectedLesson.type === "assignment" ? (
           <AssignmentDetailView
             course={course}
             lesson={selectedLesson}
-            onBack={() => setView({ name: "course", courseId: course.id })}
+            initialAssignment={selectedAssignment ?? undefined}
+            onBack={() => {
+              if (selectedAssignment) {
+                setSelectedAssignment(null);
+              } else {
+                setView({ name: "course", courseId: course.id });
+              }
+            }}
             onGoToCourses={goToCourses}
           />
         ) : selectedLesson.type === "quiz" ? (
@@ -488,6 +526,7 @@ export function TeacherDashboardPage() {
           <LessonDetailView
             course={course}
             lesson={selectedLesson}
+            onSelectAssignment={(item) => setSelectedAssignment(item)}
             onBack={() => setView({ name: "course", courseId: course.id })}
             onGoToCourses={goToCourses}
           />
@@ -498,7 +537,10 @@ export function TeacherDashboardPage() {
           onBack={goToCourses}
           onEditCourse={() => void handleEditCourse(course.id)}
           onDeleteCourse={handleDeleteCourse}
-          onChangeStatus={(status) => handlePreviewCourseStatus(course.id, status)}
+          onChangeStatus={(status) =>
+            void handleChangeCourseStatus(course.id, status)
+          }
+          isUpdatingStatus={isUpdatingStatus}
           actionError={courseActionError}
           hasForum={forumCreatedFor.includes(course.id)}
           onCreateForum={() => handleCreateForum(course.id)}

@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { errorMessage } from "@shared/api";
+import { useAuth } from "@shared/context";
+import { createAssignmentApi } from "../api/assignmentApi";
 import { ChevronRightIcon } from "./Icons";
 import type {
   Course,
@@ -37,6 +40,55 @@ export function QuizBuilderView({
     quizData.questions[0]?.id ?? null,
   );
   const [error, setError] = useState("");
+
+  const { user } = useAuth();
+  const [passScore, setPassScore] = useState(1);
+  const [deadline, setDeadline] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState("");
+
+  const handlePublishQuiz = async () => {
+    if (!user?.id) {
+      setError("Missing instructor session. Please log in again.");
+      return;
+    }
+
+    const savedQuestions = quizData.questions.filter((q) => q.saved);
+    if (savedQuestions.length === 0) {
+      setError("Please save at least one question before publishing.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError("");
+    setSubmitSuccess("");
+
+    try {
+      await createAssignmentApi(lesson.id, user.id, {
+        title: lesson.title,
+        type: "QUIZ",
+        instructions: lesson.description || undefined,
+        passScore,
+        deadline: deadline ? `${deadline}:00` : null,
+        questions: savedQuestions.map((q) => ({
+          content: q.prompt.trim(),
+          points: 1,
+          options: q.options
+            .filter((opt) => opt.text.trim())
+            .map((opt) => ({
+              content: opt.text.trim(),
+              isCorrect: q.correctOptionIds.includes(opt.id),
+            })),
+        })),
+      });
+
+      setSubmitSuccess("Quiz saved to server!");
+    } catch (err: unknown) {
+      setError(errorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const questions = quizData.questions;
 
@@ -285,6 +337,56 @@ export function QuizBuilderView({
                 : "Not set"}
             </span>
           </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              marginTop: 12,
+              flexWrap: "wrap",
+              alignItems: "flex-end",
+            }}
+          >
+            <label>
+              <span style={{ display: "block", fontSize: 13 }}>Pass score</span>
+              <input
+                type="number"
+                min={0}
+                className="td-lesson-form__input"
+                value={passScore}
+                onChange={(e) =>
+                  setPassScore(Math.max(0, Number(e.target.value) || 0))
+                }
+              />
+            </label>
+
+            <label>
+              <span style={{ display: "block", fontSize: 13 }}>
+                Deadline (optional)
+              </span>
+              <input
+                type="datetime-local"
+                className="td-lesson-form__input"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+              />
+            </label>
+
+            <button
+              type="button"
+              className="td-btn td-btn--primary"
+              disabled={isSubmitting}
+              onClick={() => void handlePublishQuiz()}
+            >
+              {isSubmitting ? "Saving quiz..." : "Save quiz to server"}
+            </button>
+          </div>
+
+          {submitSuccess && (
+            <p style={{ color: "#15803d", marginTop: 8, fontWeight: 500 }}>
+              {submitSuccess}
+            </p>
+          )}
         </section>
 
         <section className="td-card td-quiz-question-nav">

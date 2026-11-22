@@ -11,6 +11,7 @@ interface CoursePageViewProps {
   onEditCourse: () => void;
   onDeleteCourse: () => void;
   onChangeStatus: (status: TeacherCourseStatus) => void;
+  isUpdatingStatus?: boolean;
   actionError?: string;
   hasForum: boolean;
   onCreateForum: () => void;
@@ -27,6 +28,7 @@ export function CoursePageView({
   onEditCourse,
   onDeleteCourse,
   onChangeStatus,
+  isUpdatingStatus,
   actionError,
   onNewLesson,
   onOpenLesson,
@@ -70,17 +72,22 @@ export function CoursePageView({
             {course.instructor} · {plural(lessonCount, "lesson")} · {liveCount}{" "}
             live practice
           </p>
-          <span className={`td-course-status td-course-status--${(course.status ?? "DRAFT").toLowerCase()}`}>
+          <span
+            className={`td-course-status td-course-status--${(course.status ?? "DRAFT").toLowerCase()}`}
+          >
             {(course.status ?? "DRAFT").toLowerCase()}
           </span>
         </div>
         <div className="td-topbar__actions">
           <label className="td-course-status-control">
-            <span>Preview status</span>
+            <span>Course status</span>
             <select
               className="td-course-status-select"
               value={course.status ?? "DRAFT"}
-              onChange={(event) => onChangeStatus(event.target.value as TeacherCourseStatus)}
+              disabled={isUpdatingStatus}
+              onChange={(event) =>
+                onChangeStatus(event.target.value as TeacherCourseStatus)
+              }
             >
               <option value="DRAFT">Draft</option>
               <option value="PUBLISHED">Published</option>
@@ -125,7 +132,7 @@ export function CoursePageView({
         </p>
       )}
       <p className="td-course-preview-note">
-        Status changes are a UI preview only; API-14 and API-15 are not connected yet.
+        Delete course is not connected yet (API-15).
       </p>
 
       <div className="td-course-body">
