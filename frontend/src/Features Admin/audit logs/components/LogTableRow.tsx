@@ -2,7 +2,6 @@ import React from 'react';
 import { Log } from '../types';
 import { RoleBadge } from './RoleBadge';
 
-
 interface LogTableRowProps {
   log: Log;
 }
@@ -10,43 +9,63 @@ interface LogTableRowProps {
 export const LogTableRow: React.FC<LogTableRowProps> = ({
   log
 }) => {
+  const formattedDate = !isNaN(log.date.getTime())
+    ? log.date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : 'Unknown Date';
+
   return (
     <tr className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
       {/* Date & Time */}
-      <td className="px-6 py-4">{log.date.toDateString()}</td>
+      <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{formattedDate}</td>
       
       {/* Avatar & Name */}
-      <td>
-        <div className="flex items-center gap-3 cursor-pointer group">
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
           {log.actorAvatarUrl ? (
             <img
               src={log.actorAvatarUrl}
               alt={log.actorName}
-              className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0"
+              className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-800 font-medium flex items-center justify-center text-sm shrink-0">
+            <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 font-medium flex items-center justify-center text-xs shrink-0">
               {log.actorInitials}
             </div>
           )}
-          <div className='flex flex-col'>
-            <span className="text-sm font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
+          <div className="flex flex-col items-start gap-0.5">
+            <span className="text-sm font-medium text-slate-900">
               {log.actorName}
             </span>
-            <RoleBadge role={log.actorRole}/>
+            {log.actorRole && <RoleBadge role={log.actorRole} />}
           </div>
-          
         </div> 
       </td>
 
       {/* Action Performed */}
-      <td className="px-6 py-4 text-sm text-slate-600">{log.action}</td>
+      <td className="px-6 py-4 text-sm">
+        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-800">
+          {log.action}
+        </span>
+      </td>
 
-      {/* TargetEntity */}
-      <td className="px-6 py-4 text-sm text-slate-600">{log.targetEntity}</td>
+      {/* Target Entity */}
+      <td className="px-6 py-4 text-sm text-slate-600 font-mono text-xs">
+        {log.targetEntity}
+      </td>
       
-      {/* IP Address */}
-      <td className="px-6 py-4 text-sm text-slate-600">{log.ipAddress}</td>
+      {/* Entity Type */}
+      <td className="px-6 py-4 text-sm text-slate-600">
+        <span className="text-xs uppercase tracking-wider font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/60">
+          {log.entityType}
+        </span>
+      </td>
     </tr>
   );
 };

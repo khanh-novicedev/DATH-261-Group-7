@@ -1,23 +1,55 @@
-export type UserRole = 'Student' | 'Teacher' | 'Admin'; //NOTE: trùng với trang User
+import { UserRole } from '../../../Shared/types/index'
 
-export type ActionType = 'Created Account' | 'Suspended Account' | 'Activated Acount' | 'Created Coure' | 'Deleted Course' | 'Submitted Report' | 'Resolved Report';
+export type AuditLogAction = 'ACTIVE_USER' | 'SUSPEND_USER';
 
-export interface Log {
-  id: number;
-  date: Date;
-  actorName: string;
-  actorRole: UserRole;
-  actorAvatarUrl?: string;
-  actorInitials?: string;
-  action: ActionType;
-  targetEntity: string;
-  ipAddress: string;
+export const AUDIT_LOG_ACTIONS: AuditLogAction[] = ['ACTIVE_USER', 'SUSPEND_USER'];
+
+export const USER_ROLES: UserRole[] = ['LEARNER', 'ADMIN', 'INSTRUCTOR'];
+
+export interface AuditActor {
+  id: string;
+  fullName: string;
+  role?: string;
+  avatarUrl?: string;
 }
 
-export interface FilterState {
-  search: string;
-  startDate: Date;
-  endDate: Date;
-  action: 'All' | ActionType;
-  actorRole: 'All' | UserRole;
+export interface AuditLogItem {
+  id: string;
+  actor: AuditActor;
+  action: AuditLogAction | string;
+  entityType: string;
+  entityId: string;
+  createdAt: string;
+}
+
+export interface Log {
+  id: string;
+  date: Date;
+  actorName: string;
+  actorRole?: string;
+  actorAvatarUrl?: string;
+  actorInitials?: string;
+  action: AuditLogAction | string;
+  entityType: string;
+  entityId: string;
+  targetEntity: string;
+}
+
+export interface AuditLogFilterParams {
+  page?: number;
+  size?: number;
+  action?: AuditLogAction | string;
+  actorRole?: 'All' | UserRole;
+  actorId?: string;
+  from?: string; // ISO date string
+  to?: string;   // ISO date string
+  search?: string; // client search helper if needed
+}
+
+export interface AuditLogListInfo {
+  items: AuditLogItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }

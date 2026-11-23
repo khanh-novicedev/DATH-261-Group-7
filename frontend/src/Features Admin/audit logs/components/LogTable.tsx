@@ -19,9 +19,9 @@ export const LogTable: React.FC<LogTableProps> = ({
           log={log}
         />
       )}
-      header={["Date & Time", "Actor", "Action Performed", "Target Entity", "IP Address"]}
-      emptyMessage="No users found matching your filters."
-      colSpan={6}
+      header={["Date & Time", "Actor", "Action Performed", "Target Entity", "Entity Type"]}
+      emptyMessage="No audit logs found matching your filters."
+      colSpan={5}
     />
   );
 };

@@ -6,3 +6,4 @@ export * from './components/LogTableRow';
 export * from './components/LogFilters';
 export * from './components/RoleBadge';
 export * from './hooks/useAuditLogs';
+export * from './api/auditLogApi';
