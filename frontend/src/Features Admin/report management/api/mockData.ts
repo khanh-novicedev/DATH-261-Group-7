@@ -1,37 +1,37 @@
 import { ReportItem } from '../types';
 
-
 export const initialReports: ReportItem[] = [
   {
-    id: 1,
-    name: "Sarah Jenkins",
-    date: new Date('2026-10-25T12:30:15'),
-    flag: "Harassment",
-    reportedContent: "\"This is completely unacceptable. The instructor has no idea what they're talking about. I demand a refund for this entire course. This is a total waste of time and money.\"",
-    reportedPage: "Q&A Comment",
-    reason: "The user is using aggressive language and making personal attacks against the instructor. This violates our community guidelines regarding respect and safety.",
-    status: "Pending"
+    id: '1',
+    name: 'Sarah Jenkins',
+    date: new Date('2023-10-24T14:32:01'),
+    entityType: 'QNA',
+    entityId: '882',
+    reason: 'Inappropriate language in lecture comments.',
+    status: 'PENDING',
+    reportedContent: 'This user keeps posting rude remarks in question threads.',
+    reportedPage: 'QNA #882',
   },
   {
-    id: 2,
-    name: "David Kim",
-    date: new Date('2026-10-25T11:00:00'),
-    flag: "Spam",
-    reportedContent: "\"Check out my new course on Abc! It's the best way to learn React in 2024. Use my referral link: https://abc.com/course/123456\"",
-    reportedPage: "Live Room Chat",
-    reason: "This user is repeatedly posting external links to their own courses during the live session, disrupting the Q&A and attempting to self-promote.",
-    status: "Pending"
+    id: '2',
+    name: 'Alex Rivera',
+    date: new Date('2023-10-23T11:15:00'),
+    entityType: 'QNA',
+    entityId: '883',
+    reason: 'Spam link to external commercial website.',
+    status: 'DELETE_CONTENT',
+    reportedContent: 'Check out this website for free test answers: spam-link.com',
+    reportedPage: 'QNA #883',
   },
   {
-    id: 3,
-    name: "Michael Chen",
-    date: new Date('2026-10-25T00:00:00'),
-    flag: "Repeated disruption",
-    reportedContent: "\"I don't think this course is suitable for beginners. The instructor is moving too fast and doesn't explain the basics clearly. I'm really struggling to keep up with the pace.\"",
-    reportedPage: "Q&A Comment",
-    reason: "The user has posted the same complaint under six different lessons and replied repeatedly to students who asked unrelated questions. Several learners have said the repeated messages are making it difficult to find answers in the Q&A feed. I have included the original comment here for context: critical feedback itself should remain welcome, but the duplicate replies may need moderation. Please review the surrounding thread before deciding whether to warn the author or delete the repeated content.",
-    status: "Pending"
+    id: '3',
+    name: 'Maria Garcia',
+    date: new Date('2023-10-22T09:40:12'),
+    entityType: 'QNA',
+    entityId: '880',
+    reason: 'Repeated disruption during discussion forum.',
+    status: 'WARN_USER',
+    reportedContent: 'Continuous spamming of identical questions.',
+    reportedPage: 'QNA #880',
   }
 ];
-
-

@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 
 export interface DateFilterProps {
-  startDate: Date;
-  endDate: Date;
+  startDate?: Date;
+  endDate?: Date;
   onChange: (range: { startDate: Date; endDate: Date }) => void;
   className?: string;
 }
@@ -14,7 +14,6 @@ export const DateFilter: React.FC<DateFilterProps> = ({
   onChange,
   className = 'w-full sm:w-61',
 }) => {
-  
   const [dateOpen, setDateOpen] = useState(false);
   const dateRef = useRef<HTMLDivElement>(null);
 
@@ -32,8 +31,8 @@ export const DateFilter: React.FC<DateFilterProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Format helper to YYYY-MM-DD
-  const formatDateForInput = (d: Date): string => {
+
+  const formatDateForInput = (d?: Date): string => {
     if (!d || isNaN(d.getTime())) return '';
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -41,7 +40,7 @@ export const DateFilter: React.FC<DateFilterProps> = ({
     return `${year}-${month}-${day}`;
   };
 
-  // Synchronize temp input values whenever the date picker opens
+
   useEffect(() => {
     if (dateOpen) {
       const isStartValid = startDate && startDate.getTime() > 0;
@@ -50,13 +49,11 @@ export const DateFilter: React.FC<DateFilterProps> = ({
     }
   }, [dateOpen, startDate, endDate]);
 
-  // Determine if a custom date filter is active
   const isDateFiltered = Boolean(startDate && startDate.getTime() > 0);
 
-  // Formatted date label
   const dateLabel = useMemo(() => {
-    if (!isDateFiltered) {
-      return 'Oct 24 – Oct 24, 2023';
+    if (!isDateFiltered || !startDate || !endDate) {
+      return 'Filter by Date';
     }
 
     const formatOpts: Intl.DateTimeFormatOptions = {
@@ -70,7 +67,6 @@ export const DateFilter: React.FC<DateFilterProps> = ({
     return `${sStr} – ${eStr}`;
   }, [startDate, endDate, isDateFiltered]);
 
-  // Quick Preset Selection Handler
   const handleSelectPreset = (type: 'all' | 'today' | 'last7' | 'last30') => {
     const now = new Date();
     if (type === 'all') {
@@ -91,7 +87,6 @@ export const DateFilter: React.FC<DateFilterProps> = ({
       start.setDate(start.getDate() - 29);
     }
 
-    // Subtract 1ms to ensure matching with '<' comparison
     const safeStart = new Date(start.getTime() - 1);
     onChange({
       startDate: safeStart,
@@ -100,7 +95,6 @@ export const DateFilter: React.FC<DateFilterProps> = ({
     setDateOpen(false);
   };
 
-  // Custom Range Apply Handler
   const handleApplyCustomDate = () => {
     if (!tempStartDate && !tempEndDate) {
       onChange({
@@ -131,7 +125,6 @@ export const DateFilter: React.FC<DateFilterProps> = ({
     setDateOpen(false);
   };
 
-  // Reset Date Handler
   const handleResetDate = () => {
     onChange({
       startDate: new Date(0),
@@ -169,86 +162,77 @@ export const DateFilter: React.FC<DateFilterProps> = ({
         </div>
       </button>
 
-      {/* Date Picker Popover */}
       {dateOpen && (
-        <div className="absolute right-0 sm:left-0 mt-1.5 w-80 bg-white border border-slate-200 rounded-lg shadow-lg p-4 z-40 animate-in fade-in slide-in-from-top-1 duration-150 text-left">
-          {/* Presets */}
-          <div className="mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
-              Quick Presets
-            </span>
-            <div className="grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleSelectPreset('all')}
-                className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
-              >
-                All Time
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSelectPreset('today')}
-                className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
-              >
-                Today
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSelectPreset('last7')}
-                className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
-              >
-                Last 7 Days
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSelectPreset('last30')}
-                className="px-2.5 py-1.5 text-xs font-medium rounded-md text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
-              >
-                Last 30 Days
-              </button>
+        <div className="absolute right-0 mt-1.5 w-72 bg-white border border-slate-200 rounded-xl shadow-xl p-3 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+          {/* Quick Presets */}
+          <div className="grid grid-cols-2 gap-1.5 mb-3">
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('today')}
+              className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200/60 transition-colors text-center cursor-pointer"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('last7')}
+              className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200/60 transition-colors text-center cursor-pointer"
+            >
+              Last 7 days
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('last30')}
+              className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200/60 transition-colors text-center cursor-pointer"
+            >
+              Last 30 days
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('all')}
+              className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200/60 transition-colors text-center cursor-pointer"
+            >
+              All Time
+            </button>
+          </div>
+
+          <div className="border-t border-slate-100 pt-2.5 space-y-2">
+            <div>
+              <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={tempStartDate}
+                onChange={(e) => setTempStartDate(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={tempEndDate}
+                onChange={(e) => setTempEndDate(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
+              />
             </div>
           </div>
 
-          {/* Custom Date Inputs */}
-          <div className="border-t border-slate-100 pt-3 space-y-2.5">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
-              Custom Range
-            </span>
-            <div className="flex flex-col gap-2">
-              <div>
-                <label className="text-xs text-slate-600 block mb-1">From Date</label>
-                <input
-                  type="date"
-                  value={tempStartDate}
-                  onChange={(e) => setTempStartDate(e.target.value)}
-                  className="w-full px-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-md text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-600 block mb-1">To Date</label>
-                <input
-                  type="date"
-                  value={tempEndDate}
-                  onChange={(e) => setTempEndDate(e.target.value)}
-                  className="w-full px-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-md text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 transition-colors"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-3">
+          <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-slate-100">
             <button
               type="button"
               onClick={handleResetDate}
-              className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2 py-1 rounded hover:bg-slate-50 transition-colors"
+              className="text-xs text-slate-500 hover:text-slate-800 font-medium cursor-pointer"
             >
-              Reset
+              Clear
             </button>
             <button
               type="button"
               onClick={handleApplyCustomDate}
-              className="text-xs bg-slate-900 text-white font-medium px-3 py-1.5 rounded-md hover:bg-slate-800 active:bg-slate-950 transition-colors shadow-2xs cursor-pointer"
+              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-medium transition-colors cursor-pointer"
             >
               Apply
             </button>

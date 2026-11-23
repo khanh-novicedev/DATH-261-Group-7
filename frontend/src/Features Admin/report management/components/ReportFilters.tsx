@@ -1,5 +1,5 @@
 import React from 'react';
-import { ReportFilterState, ReportStatus, ReportFlag } from '../types';
+import { ReportFilterState, ReportStatus, REPORT_STATUSES } from '../types';
 import { Searchbar } from './Searchbar';
 import { DropdownFilter } from './DropdownFilter';
 import { DateFilter } from './DateFilter';
@@ -9,12 +9,24 @@ export interface ReportFiltersProps {
   onFilterChange: (filters: Partial<ReportFilterState>) => void;
 }
 
+const STATUS_LABELS: Record<ReportStatus, string> = {
+  PENDING: 'Pending',
+  DELETE_CONTENT: 'Delete Content',
+  WARN_USER: 'Warn User',
+  DISMISS: 'Dismiss',
+};
+
 export const ReportFilters: React.FC<ReportFiltersProps> = ({
   filters,
   onFilterChange,
 }) => {
-  const statuses: ('All' | ReportStatus)[] = ['All', 'Pending', 'Resolved', 'Dismissed'];
-  const flags: ('All' | ReportFlag)[] = ['All', 'Spam', 'Repeated disruption', 'Harassment'];
+  const statusOptions: { label: string; value: 'ALL' | ReportStatus }[] = [
+    { label: 'All Statuses', value: 'ALL' },
+    ...REPORT_STATUSES.map((status) => ({
+      label: STATUS_LABELS[status],
+      value: status,
+    })),
+  ];
 
   return (
     <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -22,7 +34,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
       <Searchbar
         value={filters.search}
         onChange={(search) => onFilterChange({ search })}
-        placeholder="Search by User, Content, Reason or Page..."
+        placeholder="Filter by reporter name, reason or entity ID..."
       />
 
       {/* Filters Group */}
@@ -38,18 +50,9 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
         <DropdownFilter
           label="Status"
           value={filters.status}
-          options={statuses}
+          options={statusOptions}
           allLabel="All Statuses"
-          onChange={(status) => onFilterChange({ status })}
-        />
-
-        {/* Flag Filter */}
-        <DropdownFilter
-          label="Flag"
-          value={filters.flag}
-          options={flags}
-          allLabel="All Flags"
-          onChange={(flag) => onFilterChange({ flag })}
+          onChange={(status) => onFilterChange({ status: status as 'ALL' | ReportStatus })}
         />
       </div>
     </div>

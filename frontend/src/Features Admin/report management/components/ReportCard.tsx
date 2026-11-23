@@ -1,16 +1,20 @@
 import React from 'react';
-import { Clock, Flag } from 'lucide-react';
-import { ReportItem, ReportFlag } from '../types';
+import { Clock, ShieldAlert, AlertTriangle, Trash2, XCircle } from 'lucide-react';
+import { ReportItem, ReportStatus } from '../types';
 
 export interface ReportCardProps {
   report: ReportItem;
-  onDismiss?: (id: number) => void;
-  onResolve?: (id: number) => void;
+  onDismiss?: (id: string) => void;
+  onWarnUser?: (id: string) => void;
+  onDeleteContent?: (id: string) => void;
+  onResolve?: (id: string) => void;
 }
 
 export const ReportCard: React.FC<ReportCardProps> = ({
   report,
   onDismiss,
+  onWarnUser,
+  onDeleteContent,
   onResolve,
 }) => {
   const getInitials = (name: string): string => {
@@ -36,28 +40,42 @@ export const ReportCard: React.FC<ReportCardProps> = ({
     return target.toLocaleDateString();
   };
 
-  const getFlagBadgeStyles = (flag: ReportFlag) => {
-    switch (flag) {
-      case 'Spam':
-        return {
-          container: 'bg-amber-100 text-slate-700',
-          icon: 'text-slate-700',
-        };
-      case 'Harassment':
-      case 'Repeated disruption':
-      default:
-        return {
-          container: 'bg-red-50 text-red-600',
-          icon: 'text-red-600',
-        };
+  const getStatusBadge = (status: ReportStatus) => {
+    switch (status) {
+      case 'PENDING':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+            <Clock className="w-3.5 h-3.5 text-amber-600" />
+            Pending
+          </span>
+        );
+      case 'DELETE_CONTENT':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+            <Trash2 className="w-3.5 h-3.5 text-red-600" />
+            Delete Content
+          </span>
+        );
+      case 'WARN_USER':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200">
+            <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+            Warn User
+          </span>
+        );
+      case 'DISMISS':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+            <XCircle className="w-3.5 h-3.5 text-slate-500" />
+            Dismissed
+          </span>
+        );
     }
   };
 
-  const flagStyles = getFlagBadgeStyles(report.flag);
-
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col gap-5 transition-shadow hover:shadow-sm">
-      {/* Header: User Info & Flag Badge */}
+      {/* Header: User Info & Status / Entity Badge */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           {/* Avatar Circle */}
@@ -71,34 +89,36 @@ export const ReportCard: React.FC<ReportCardProps> = ({
             </span>
             <div className="flex items-center gap-1.5 text-slate-500">
               <Clock className="w-4 h-4 shrink-0" />
-              <span className="text-sm leading-none">
+              <span className="text-xs leading-none">
                 {formatTimeAgo(report.date)}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Right: Flag Badge */}
-        <div
-          className={`inline-flex items-center gap-2 px-2 py-1 rounded text-xs font-medium ${flagStyles.container}`}
-        >
-          <Flag className={`w-3.5 h-3.5 fill-current ${flagStyles.icon}`} />
-          <span>{report.flag}</span>
+        {/* Right: Status & Entity */}
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+            <ShieldAlert className="w-3.5 h-3.5 text-blue-600" />
+            {report.entityType}
+          </span>
+          {getStatusBadge(report.status)}
         </div>
       </div>
 
       {/* Content Section */}
       <div className="flex flex-col gap-3">
-        {/* Flagged Content Box */}
-        <div className="bg-slate-50 rounded-md p-4 flex flex-col gap-2 border border-slate-100/80">
-          <span className="text-xs font-medium text-slate-500">
-            {report.reportedPage
-              ? `Flagged ${report.reportedPage}`
-              : 'Flagged Content'}
-          </span>
-          <p className="text-sm text-slate-900 leading-normal">
-            {report.reportedContent}
+        {/* Target Entity Box */}
+        <div className="bg-slate-50 rounded-md p-3.5 flex flex-col gap-1 border border-slate-100/80">
+          <span className="text-xs font-medium text-slate-500">Target Entity:</span>
+          <p className="text-slate-900 font-mono text-xs">
+            {report.entityType} ID: #{report.entityId}
           </p>
+          {report.reportedContent && (
+            <p className="text-sm text-slate-800 mt-1 italic">
+              "{report.reportedContent}"
+            </p>
+          )}
         </div>
 
         {/* Reporter's Reason */}
@@ -107,29 +127,39 @@ export const ReportCard: React.FC<ReportCardProps> = ({
             Reporter's Reason:
           </span>
           <p className="text-sm text-slate-700 leading-relaxed">
-            {report.reason}
+            {report.reason || 'No description provided.'}
           </p>
         </div>
       </div>
 
-      {/* Footer: Action Buttons */}
-      <div className="flex items-center justify-end gap-3 flex-wrap pt-1">
-        <button
-          type="button"
-          onClick={() => onDismiss?.(report.id)}
-          className="px-4 py-2 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-900 text-sm font-medium border border-slate-200 rounded-md transition-colors cursor-pointer shadow-2xs"
-        >
-          Dismiss Report
-        </button>
+      {/* Footer: Action Buttons (Only when report is PENDING) */}
+      {report.status === 'PENDING' && (
+        <div className="flex items-center justify-end gap-3 flex-wrap pt-1 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => onDismiss?.(report.id)}
+            className="px-4 py-2 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-900 text-sm font-medium border border-slate-200 rounded-md transition-colors cursor-pointer shadow-2xs"
+          >
+            Dismiss Report
+          </button>
 
-        <button
-          type="button"
-          onClick={() => onResolve?.(report.id)}
-          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-sm font-medium rounded-md transition-colors cursor-pointer shadow-2xs"
-        >
-          Resolve (Warn/Delete Content)
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => onWarnUser ? onWarnUser(report.id) : onResolve?.(report.id)}
+            className="px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 text-sm font-medium border border-amber-300 rounded-md transition-colors cursor-pointer shadow-2xs"
+          >
+            Warn User
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onDeleteContent ? onDeleteContent(report.id) : onResolve?.(report.id)}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-sm font-medium rounded-md transition-colors cursor-pointer shadow-2xs"
+          >
+            Delete Content
+          </button>
+        </div>
+      )}
     </div>
   );
 };
