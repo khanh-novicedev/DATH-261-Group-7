@@ -10,13 +10,19 @@ import com.class2life.entity.assessment.AssignmentType;
 import com.class2life.entity.assessment.QuizOption;
 import com.class2life.entity.assessment.QuizQuestion;
 import com.class2life.entity.course.Lesson;
+import com.class2life.entity.user.User;
+import com.class2life.entity.user.UserRole;
 import com.class2life.exception.ApiException;
 import com.class2life.exception.ErrorCode;
 import com.class2life.mapper.AssignmentMapper;
 import com.class2life.repository.assessment.AssignmentRepository;
 import com.class2life.repository.assessment.QuizOptionRepository;
 import com.class2life.repository.assessment.QuizQuestionRepository;
+import com.class2life.repository.user.UserRepository;
 import com.class2life.service.course.CourseService;
+import com.class2life.service.enrolment.EnrolmentService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,24 +40,36 @@ public class AssignmentService {
     private final QuizOptionRepository quizOptionRepository;
     private final CourseService courseService;
     private final AssignmentMapper assignmentMapper;
+    private final UserRepository userRepository;
+    private final EnrolmentService enrolmentService;
 
     public AssignmentService(AssignmentRepository assignmentRepository,
                              QuizQuestionRepository quizQuestionRepository,
                              QuizOptionRepository quizOptionRepository,
                              CourseService courseService,
-                             AssignmentMapper assignmentMapper) {
+                             AssignmentMapper assignmentMapper,
+                             UserRepository userRepository,
+                             EnrolmentService enrolmentService) {
         this.assignmentRepository = assignmentRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.quizOptionRepository = quizOptionRepository;
         this.courseService = courseService;
         this.assignmentMapper = assignmentMapper;
+        this.userRepository = userRepository;
+        this.enrolmentService = enrolmentService;
     }
 
+    // API-25: the instructor is the logged-in user (from the JWT), never a client-supplied id
     @Transactional
-    public AssignmentResponse createAssignment(UUID lessonId, UUID instructorId, CreateAssignmentRequest request) {
+    public AssignmentResponse createAssignment(UUID lessonId, CreateAssignmentRequest request) {
+        User instructor = currentUser();
+        if (instructor.getRole() != UserRole.INSTRUCTOR) {
+            throw new ApiException(ErrorCode.FORBIDDEN, "Only instructors can create assignments");
+        }
+
         Lesson lesson = courseService.getLessonOrThrow(lessonId);
 
-        if (!courseService.isLessonOwnedByInstructor(lessonId, instructorId)) {
+        if (!courseService.isLessonOwnedByInstructor(lessonId, instructor.getId())) {
             throw new ApiException(ErrorCode.FORBIDDEN, "You can only add assignments to your own courses");
         }
 
@@ -74,19 +92,30 @@ public class AssignmentService {
         return assignmentMapper.toAssignmentResponse(savedAssignment);
     }
 
+    // API-26: enrolled learners, the course owner and admins
     @Transactional(readOnly = true)
     public List<AssignmentResponse> getAssignmentsByLesson(UUID lessonId) {
+        User user = currentUser();
         // Fails with 404 when the lesson does not exist
-        courseService.getLessonOrThrow(lessonId);
+        Lesson lesson = courseService.getLessonOrThrow(lessonId);
 
-        // TODO: a learner may only see assignments of courses they are enrolled in:
-        // call EnrolmentService.isEnrolled(userId, courseId) once Khanh Phat implements it
+        switch (user.getRole()) {
+            case ADMIN -> { }
+            case INSTRUCTOR -> {
+                if (!courseService.isLessonOwnedByInstructor(lessonId, user.getId())) {
+                    throw new ApiException(ErrorCode.FORBIDDEN, "You can only view assignments of your own courses");
+                }
+            }
+            case LEARNER -> requireEnrolled(user, lesson);
+            default -> throw new ApiException(ErrorCode.FORBIDDEN);
+        }
+
         return assignmentRepository.findByLessonIdOrderByCreatedAtAsc(lessonId).stream()
                 .map(assignmentMapper::toAssignmentResponse)
                 .toList();
     }
 
-    // Learner-facing questions: the response DTOs have no is_correct field, so it cannot leak
+    // API-27, learner-facing: the response DTOs have no is_correct field, so it cannot leak
     @Transactional(readOnly = true)
     public List<QuizQuestionResponse> getQuizQuestions(UUID assignmentId) {
         Assignment assignment = assignmentRepository.findById(assignmentId)
@@ -96,11 +125,24 @@ public class AssignmentService {
             throw new ApiException(ErrorCode.ASSIGNMENT_TYPE_MISMATCH, "This assignment is not a quiz");
         }
 
-        // TODO: enrolment check with EnrolmentService.isEnrolled(userId, courseId), same as above
+        // Only an enrolled learner may take the quiz (spec role: Student)
+        User user = currentUser();
+        if (user.getRole() != UserRole.LEARNER) {
+            throw new ApiException(ErrorCode.FORBIDDEN, "Only learners can take quizzes");
+        }
+        requireEnrolled(user, assignment.getLesson());
 
-        List<QuizQuestion> questions = quizQuestionRepository.findByAssignmentId(assignmentId);
-        List<QuizOption> options = quizOptionRepository.findByQuestionAssignmentId(assignmentId);
+        // Two queries in total, both in a stable order
+        List<QuizQuestion> questions = quizQuestionRepository.findByAssignmentIdOrderByIdAsc(assignmentId);
+        List<QuizOption> options = quizOptionRepository.findByQuestionAssignmentIdOrderByIdAsc(assignmentId);
         return assignmentMapper.toQuizQuestionResponses(questions, options);
+    }
+
+    private void requireEnrolled(User learner, Lesson lesson) {
+        UUID courseId = lesson.getCourse().getId();
+        if (!enrolmentService.isEnrolled(learner.getId(), courseId)) {
+            throw new ApiException(ErrorCode.NOT_ENROLLED, "You must be enrolled in this course");
+        }
     }
 
     private void validateByType(CreateAssignmentRequest request) {
@@ -169,5 +211,14 @@ public class AssignmentService {
 
     private int pointsOf(CreateQuizQuestionRequest question) {
         return question.points() == null ? DEFAULT_QUESTION_POINTS : question.points();
+    }
+
+    private User currentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null || "anonymousUser".equals(auth.getName())) {
+            throw new ApiException(ErrorCode.UNAUTHORIZED);
+        }
+        return userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
     }
 }

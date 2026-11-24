@@ -11,4 +11,7 @@ public interface QuizOptionRepository extends JpaRepository<QuizOption, UUID> {
     // All options of every question in one quiz, loaded in a single query
     // (path: option.question.assignment.id) to avoid one query per question.
     List<QuizOption> findByQuestionAssignmentId(UUID assignmentId);
+
+    // API-27: same options in a stable order between calls
+    List<QuizOption> findByQuestionAssignmentIdOrderByIdAsc(UUID assignmentId);
 }
