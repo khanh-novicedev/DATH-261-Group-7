@@ -41,8 +41,12 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/audit-logs").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/courses/*/enrolment").hasRole("LEARNER") // Enrol in course
+                        .requestMatchers(HttpMethod.DELETE, "/api/courses/*/enrolment").hasRole("LEARNER") // API-20 leave course; must sit above the DELETE /api/courses/** rule
                         .requestMatchers(HttpMethod.POST, "/api/courses", "/api/courses/**").hasAnyRole("ADMIN", "INSTRUCTOR") // Create course
                         .requestMatchers(HttpMethod.PATCH, "/api/courses/**").hasAnyRole("ADMIN", "INSTRUCTOR") // Publish/status
                         .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasAnyRole("ADMIN", "INSTRUCTOR") // Delete
@@ -62,10 +66,13 @@ public class SecurityConfig {
     @Bean
     public AuthenticationEntryPoint authenticationEntryPoint(ObjectMapper objectMapper) {
         return (request, response, authException) -> {
+            // The JWT filter marks expired (but otherwise valid) tokens, so the FE knows to refresh instead of logging out
+            boolean expired = Boolean.TRUE.equals(request.getAttribute(JwtAuthenticationFiller.TOKEN_EXPIRED_ATTRIBUTE));
+            ErrorCode code = expired ? ErrorCode.TOKEN_EXPIRED : ErrorCode.UNAUTHORIZED;
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             objectMapper.writeValue(response.getOutputStream(),
-                    new ApiResponse<>(false, "Unauthorized", null, ErrorCode.UNAUTHORIZED.name()));
+                    new ApiResponse<>(false, expired ? "Token expired" : "Unauthorized", null, code.name()));
         };
     }
 

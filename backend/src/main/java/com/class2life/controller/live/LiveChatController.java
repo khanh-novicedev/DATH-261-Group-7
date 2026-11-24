@@ -8,7 +8,6 @@ import com.class2life.entity.user.User;
 import com.class2life.exception.ApiException;
 import com.class2life.exception.ErrorCode;
 import com.class2life.repository.live.BreakoutRoomRepository;
-import com.class2life.repository.live.LiveSessionRepository;
 import com.class2life.repository.live.RoomMessageRepository;
 import com.class2life.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +34,9 @@ public class LiveChatController {
     // Only map STOMP so APiException wont map here
     @MessageMapping("/session/{sessionId}/chat")
     public void livechatHandling(@Payload RoomMessageRequest request, @DestinationVariable UUID sessionId, Principal principal) {
-        BreakoutRoom mainRoom = breakoutRoomRepository.findFirstBySessionIdOrderByCreatedAtAsc(sessionId).get();
-
+        BreakoutRoom mainRoom = breakoutRoomRepository.findFirstBySessionIdOrderByCreatedAtAsc(sessionId).orElseThrow(
+                () -> new ApiException(ErrorCode.SESSION_NOT_FOUND)
+        );
         User user;
         if (principal != null) {
             user = userRepository.findByEmail(principal.getName())
