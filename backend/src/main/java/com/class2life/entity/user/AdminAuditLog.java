@@ -35,7 +35,7 @@ public class AdminAuditLog {
     // Many to One relationship with user
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "actor_id", nullable = false)
-    private User actorId;
+    private User actor;
 
 
 }
