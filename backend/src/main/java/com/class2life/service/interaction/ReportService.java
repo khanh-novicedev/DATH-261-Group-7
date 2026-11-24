@@ -1,5 +1,6 @@
 package com.class2life.service.interaction;
 
+import com.class2life.common.PageResponse;
 import com.class2life.dto.interaction.*;
 import com.class2life.entity.interaction.*;
 import com.class2life.entity.user.AdminAuditLog;
@@ -9,9 +10,12 @@ import com.class2life.exception.ApiException;
 import com.class2life.exception.ErrorCode;
 import com.class2life.repository.course.CourseRepository;
 import com.class2life.repository.interaction.*;
-import com.class2life.repository.user.AdminAuditLogRepository;
+import com.class2life.repository.audit.AdminAuditLogRepository;
 import com.class2life.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -45,9 +49,12 @@ public class ReportService {
     }
 
     @Transactional(readOnly = true)
-    public List<ReportResponse> list() {
+    public PageResponse<ReportResponse> list(ReportStatus status, Pageable pageable) {
         requireAdmin();
-        return reportRepository.findAllByOrderByCreatedAtDesc().stream().map(this::response).toList();
+        ReportStatus effective = status == null ? ReportStatus.PENDING : status;
+        Pageable safePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<ReportedContent> page = reportRepository.findByStatusOrderByCreatedAtAsc(effective, safePageable);
+        return PageResponse.of(page.map(this::response));
     }
 
     @Transactional
@@ -67,7 +74,7 @@ public class ReportService {
         report.setResolvedBy(actor);
         report.setResolvedAt(LocalDateTime.now());
         // TODO (follow-up): request.note() is accepted but has no column to be stored in yet
-        AdminAuditLog log = AdminAuditLog.builder().actorId(actor)
+        AdminAuditLog log = AdminAuditLog.builder().actor(actor)
                 .action("RESOLVE_REPORT:" + action.name()).entityType("reported_contents").entityId(report.getId()).build();
         auditRepository.save(log);
         return response(reportRepository.save(report));

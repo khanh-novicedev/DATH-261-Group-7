@@ -1,5 +1,6 @@
 package com.class2life.service.enrolment;
 
+import com.class2life.common.PageResponse;
 import com.class2life.dto.enrolment.*;
 import com.class2life.entity.course.Course;
 import com.class2life.entity.course.CourseStatus;
@@ -16,6 +17,9 @@ import com.class2life.repository.enrolment.EnrolmentRepository;
 import com.class2life.repository.enrolment.LessonProgressRepository;
 import com.class2life.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -47,7 +51,8 @@ public class EnrolmentService {
         if (course.getStatus() != CourseStatus.PUBLISHED) throw new ApiException(ErrorCode.COURSE_NOT_PUBLISHED);
         if (isEnrolled(user.getId(), courseId)) throw new ApiException(ErrorCode.ALREADY_ENROLLED);
         Enrolment e = new Enrolment();
-        e.setUser(user); e.setCourse(course); e.setCompletionStatus(CompletionStatus.IN_PROGRESS);
+        e.setUser(user); e.setCourse(course);
+        e.setCompletionStatus(CompletionStatus.IN_PROGRESS);
         e = enrolmentRepository.save(e);
         for (Lesson lesson : lessonRepository.findByCourseIdOrderBySequenceNumberAsc(courseId)) {
             LessonProgress p = new LessonProgress(); p.setEnrolment(e); p.setLesson(lesson); p.setIsCompleted(false);
@@ -65,11 +70,30 @@ public class EnrolmentService {
         enrolmentRepository.delete(e);
     }
 
+    // API-21: paged, optional status filter. Counts are batched per page (2 queries), not per row.
     @Transactional(readOnly = true)
-    public List<EnrolmentResponse> myEnrolments() {
+    public PageResponse<EnrolmentResponse> myEnrolments(CompletionStatus status, Pageable pageable) {
         User user = currentUser();
-        return enrolmentRepository.findByUserIdOrderByEnrolledAtDesc(user.getId()).stream()
-                .map(this::toEnrolmentResponse).toList();
+        Pageable safePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<Enrolment> page = status == null
+                ? enrolmentRepository.findByUserIdOrderByEnrolledAtDesc(user.getId(), safePageable)
+                : enrolmentRepository.findByUserIdAndCompletionStatusOrderByEnrolledAtDesc(user.getId(), status, safePageable);
+        if (page.isEmpty()) return PageResponse.of(page.map(e -> toEnrolmentResponse(e)));
+
+        List<UUID> courseIds = page.getContent().stream().map(e -> e.getCourse().getId()).distinct().toList();
+        List<UUID> enrolmentIds = page.getContent().stream().map(Enrolment::getId).toList();
+        Map<UUID, Long> lessonsByCourse = toCountMap(lessonRepository.countByCourseIds(courseIds));
+        Map<UUID, Long> completedByEnrolment = toCountMap(lessonProgressRepository.countCompletedByEnrolmentIds(enrolmentIds));
+
+        return PageResponse.of(page.map(e -> EnrolmentResponse.from(e,
+                completedByEnrolment.getOrDefault(e.getId(), 0L),
+                lessonsByCourse.getOrDefault(e.getCourse().getId(), 0L))));
+    }
+
+    private static Map<UUID, Long> toCountMap(List<Object[]> rows) {
+        Map<UUID, Long> counts = new HashMap<>();
+        for (Object[] row : rows) counts.put((UUID) row[0], ((Number) row[1]).longValue());
+        return counts;
     }
 
     @Transactional
@@ -109,21 +133,35 @@ public class EnrolmentService {
         return progressFor(enrolment, lessonRepository.findByCourseIdOrderBySequenceNumberAsc(courseId));
     }
 
+    // API-24: paged, optional courseId. Filtering happens in SQL (not findAll + stream filter);
+    // counts are batched per page (2 grouped queries), not one enrolment load per course.
     @Transactional(readOnly = true)
-    public List<CourseMetricsResponse> courseMetrics() {
+    public PageResponse<CourseMetricsResponse> courseMetrics(UUID courseId, Pageable pageable) {
         User actor = currentUser();
         if (actor.getRole() != UserRole.ADMIN && actor.getRole() != UserRole.INSTRUCTOR)
             throw new ApiException(ErrorCode.FORBIDDEN);
-        List<Course> courses = courseRepository.findAll().stream()
-                .filter(c -> actor.getRole() == UserRole.ADMIN || c.getInstructor().getId().equals(actor.getId()))
-                .toList();
-        return courses.stream().map(c -> {
-            List<Enrolment> enrolments = enrolmentRepository.findByCourseId(c.getId());
-            long enrolled = enrolments.size();
-            long completed = enrolments.stream().filter(e -> e.getCompletionStatus() == CompletionStatus.COMPLETED).count();
+        UUID instructorId = actor.getRole() == UserRole.ADMIN ? null : actor.getId();
+        if (courseId != null) {
+            Course course = courseRepository.findById(courseId)
+                    .orElseThrow(() -> new ApiException(ErrorCode.COURSE_NOT_FOUND));
+            if (instructorId != null && !course.getInstructor().getId().equals(instructorId))
+                throw new ApiException(ErrorCode.FORBIDDEN);
+        }
+        Pageable safePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<Course> page = courseRepository.findForMetrics(instructorId, courseId, safePageable);
+
+        List<UUID> courseIds = page.getContent().stream().map(Course::getId).toList();
+        Map<UUID, Long> enrolledByCourse = courseIds.isEmpty() ? Map.of()
+                : toCountMap(enrolmentRepository.countByCourseIds(courseIds));
+        Map<UUID, Long> completedByCourse = courseIds.isEmpty() ? Map.of()
+                : toCountMap(enrolmentRepository.countByCourseIdsAndStatus(courseIds, CompletionStatus.COMPLETED));
+
+        return PageResponse.of(page.map(c -> {
+            long enrolled = enrolledByCourse.getOrDefault(c.getId(), 0L);
+            long completed = completedByCourse.getOrDefault(c.getId(), 0L);
             double rate = enrolled == 0 ? 0.0 : (double) completed / enrolled;
             return new CourseMetricsResponse(c.getId(), c.getTitle(), enrolled, completed, rate);
-        }).toList();
+        }));
     }
 
     private CourseProgressResponse progressFor(Enrolment e, List<Lesson> lessons) {

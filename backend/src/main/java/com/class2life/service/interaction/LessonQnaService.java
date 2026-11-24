@@ -1,7 +1,9 @@
 package com.class2life.service.interaction;
 
+import com.class2life.common.PageResponse;
 import com.class2life.dto.interaction.QnaRequest;
 import com.class2life.dto.interaction.QnaResponse;
+import com.class2life.dto.interaction.QnaThreadResponse;
 import com.class2life.entity.course.Lesson;
 import com.class2life.entity.interaction.LessonQna;
 import com.class2life.entity.user.User;
@@ -13,13 +15,18 @@ import com.class2life.repository.enrolment.EnrolmentRepository;
 import com.class2life.repository.interaction.LessonQnaRepository;
 import com.class2life.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,10 +37,19 @@ public class LessonQnaService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public List<QnaResponse> list(UUID lessonId) {
+    public PageResponse<QnaThreadResponse> list(UUID lessonId, Pageable pageable) {
         Lesson lesson = lesson(lessonId);
         ensureCanAccessLesson(currentUser(), lesson);
-        return qnaRepository.findByLessonIdOrderByCreatedAtAsc(lessonId).stream().map(this::response).toList();
+        Pageable safePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<LessonQna> questions = qnaRepository
+                .findByLessonIdAndParentIsNullOrderByCreatedAtDesc(lessonId, safePageable);
+        List<UUID> ids = questions.getContent().stream().map(LessonQna::getId).toList();
+        Map<UUID, List<QnaResponse>> repliesByParent = ids.isEmpty() ? Map.of()
+                : qnaRepository.findByParentIdInOrderByCreatedAtAsc(ids).stream()
+                .collect(Collectors.groupingBy(r -> r.getParent().getId(),
+                        Collectors.mapping(this::response, Collectors.toList())));
+        return PageResponse.of(questions.map(q -> new QnaThreadResponse(q.getId(), author(q),
+                q.getContent(), q.getCreatedAt(), repliesByParent.getOrDefault(q.getId(), List.of()))));
     }
 
     @Transactional
@@ -70,16 +86,19 @@ public class LessonQnaService {
         return lessonRepository.findById(id).orElseThrow(() -> new ApiException(ErrorCode.LESSON_NOT_FOUND));
     }
 
-    private QnaResponse response(LessonQna q) {
-        return new QnaResponse(q.getId(), q.getLesson().getId(), q.getAuthor().getId(),
-                q.getAuthor().getFullName(), q.getParent() == null ? null : q.getParent().getId(),
-                q.getContent(), q.getCreatedAt());
-    }
-
     private User currentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getName() == null || "anonymousUser".equals(auth.getName()))
             throw new ApiException(ErrorCode.UNAUTHORIZED);
         return userRepository.findByEmail(auth.getName()).orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+
+    }
+    private QnaResponse response(LessonQna q) {
+        return new QnaResponse(q.getId(), author(q), q.getContent(), q.getCreatedAt());
+    }
+
+    private QnaResponse.Author author(LessonQna q) {
+        User u = q.getAuthor();
+        return new QnaResponse.Author(u.getId(), u.getFullName(), u.getRole());
     }
 }

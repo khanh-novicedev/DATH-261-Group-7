@@ -11,4 +11,8 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, UUID
     // All questions of one quiz assignment.
     // The schema has no position column, so the order is not guaranteed.
     List<QuizQuestion> findByAssignmentId(UUID assignmentId);
+
+    // API-27: same questions in a stable order. Without a position column, id order is stable
+    // between calls but not the order the instructor typed them in.
+    List<QuizQuestion> findByAssignmentIdOrderByIdAsc(UUID assignmentId);
 }

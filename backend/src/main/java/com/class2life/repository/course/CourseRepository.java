@@ -22,4 +22,18 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
             @Param("status") CourseStatus status,
             Pageable pageable
     );
+
+    // API-24: courses for the metrics page. instructorId null = admin (all courses); courseId null = no filter.
+    @Query(value = "SELECT c FROM Course c WHERE " +
+                   "(:instructorId IS NULL OR c.instructor.id = :instructorId) AND " +
+                   "(:courseId IS NULL OR c.id = :courseId) " +
+                   "ORDER BY c.createdAt DESC",
+           countQuery = "SELECT COUNT(c) FROM Course c WHERE " +
+                   "(:instructorId IS NULL OR c.instructor.id = :instructorId) AND " +
+                   "(:courseId IS NULL OR c.id = :courseId)")
+    Page<Course> findForMetrics(
+            @Param("instructorId") UUID instructorId,
+            @Param("courseId") UUID courseId,
+            Pageable pageable
+    );
 }

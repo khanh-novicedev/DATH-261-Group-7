@@ -20,24 +20,33 @@ import com.class2life.entity.assessment.AssignmentType;
 import com.class2life.entity.assessment.QuizOption;
 import com.class2life.entity.assessment.QuizQuestion;
 import com.class2life.entity.course.Lesson;
+import com.class2life.entity.user.User;
+import com.class2life.entity.user.UserRole;
 import com.class2life.exception.ApiException;
 import com.class2life.exception.ErrorCode;
 import com.class2life.mapper.AssignmentMapper;
 import com.class2life.repository.assessment.AssignmentRepository;
 import com.class2life.repository.assessment.QuizOptionRepository;
 import com.class2life.repository.assessment.QuizQuestionRepository;
+import com.class2life.repository.user.UserRepository;
+import com.class2life.entity.course.Course;
 import com.class2life.service.course.CourseService;
+import com.class2life.service.enrolment.EnrolmentService;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @ExtendWith(MockitoExtension.class)
 class AssignmentServiceTest {
@@ -54,6 +63,12 @@ class AssignmentServiceTest {
     @Mock
     private CourseService courseService;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private EnrolmentService enrolmentService;
+
     private AssignmentService assignmentService;
 
     private final UUID lessonId = UUID.randomUUID();
@@ -63,13 +78,43 @@ class AssignmentServiceTest {
     void setUp() {
         // The real mapper is used on purpose: it has no logic that needs mocking
         assignmentService = new AssignmentService(assignmentRepository, quizQuestionRepository,
-                quizOptionRepository, courseService, new AssignmentMapper());
+                quizOptionRepository, courseService, new AssignmentMapper(), userRepository, enrolmentService);
     }
 
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    // Puts a logged-in user with this role into the SecurityContext, as the JWT filter would
+    private void loginAs(UserRole role) {
+        String email = role.name().toLowerCase() + "@class2life.com";
+        User user = new User();
+        user.setId(instructorId);
+        user.setEmail(email);
+        user.setRole(role);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList()));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+    }
+
+    private final UUID courseId = UUID.randomUUID();
+
     private Lesson lesson() {
+        Course course = new Course();
+        course.setId(courseId);
         Lesson lesson = new Lesson();
         lesson.setId(lessonId);
+        lesson.setCourse(course);
         return lesson;
+    }
+
+    private Assignment quizAssignment(UUID assignmentId) {
+        Assignment assignment = new Assignment();
+        assignment.setId(assignmentId);
+        assignment.setType(AssignmentType.QUIZ);
+        assignment.setLesson(lesson());
+        return assignment;
     }
 
     private CreateAssignmentRequest quizRequest(Integer passScore, List<CreateQuizOptionRequest> options) {
@@ -79,6 +124,7 @@ class AssignmentServiceTest {
 
     @Test
     void createAssignment_Quiz_Success() {
+        loginAs(UserRole.INSTRUCTOR);
         when(courseService.getLessonOrThrow(lessonId)).thenReturn(lesson());
         when(courseService.isLessonOwnedByInstructor(lessonId, instructorId)).thenReturn(true);
         when(assignmentRepository.save(any(Assignment.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -87,7 +133,7 @@ class AssignmentServiceTest {
                 new CreateQuizOptionRequest("Information about performance", true),
                 new CreateQuizOptionRequest("A punishment", false)));
 
-        AssignmentResponse response = assignmentService.createAssignment(lessonId, instructorId, request);
+        AssignmentResponse response = assignmentService.createAssignment(lessonId, request);
 
         assertEquals("Quiz 1", response.title());
         assertEquals(AssignmentType.QUIZ, response.type());
@@ -98,6 +144,7 @@ class AssignmentServiceTest {
 
     @Test
     void createAssignment_Quiz_NoCorrectOption_ThrowsValidationError() {
+        loginAs(UserRole.INSTRUCTOR);
         when(courseService.getLessonOrThrow(lessonId)).thenReturn(lesson());
         when(courseService.isLessonOwnedByInstructor(lessonId, instructorId)).thenReturn(true);
 
@@ -106,7 +153,7 @@ class AssignmentServiceTest {
                 new CreateQuizOptionRequest("Wrong B", false)));
 
         ApiException exception = assertThrows(ApiException.class,
-                () -> assignmentService.createAssignment(lessonId, instructorId, request));
+                () -> assignmentService.createAssignment(lessonId, request));
 
         assertEquals(ErrorCode.VALIDATION_ERROR, exception.getErrorCode());
         verify(assignmentRepository, never()).save(any(Assignment.class));
@@ -114,6 +161,7 @@ class AssignmentServiceTest {
 
     @Test
     void createAssignment_Quiz_PassScoreAboveTotalPoints_ThrowsValidationError() {
+        loginAs(UserRole.INSTRUCTOR);
         when(courseService.getLessonOrThrow(lessonId)).thenReturn(lesson());
         when(courseService.isLessonOwnedByInstructor(lessonId, instructorId)).thenReturn(true);
 
@@ -123,7 +171,7 @@ class AssignmentServiceTest {
                 new CreateQuizOptionRequest("Wrong", false)));
 
         ApiException exception = assertThrows(ApiException.class,
-                () -> assignmentService.createAssignment(lessonId, instructorId, request));
+                () -> assignmentService.createAssignment(lessonId, request));
 
         assertEquals(ErrorCode.VALIDATION_ERROR, exception.getErrorCode());
         verify(assignmentRepository, never()).save(any(Assignment.class));
@@ -131,6 +179,7 @@ class AssignmentServiceTest {
 
     @Test
     void createAssignment_FileSubmissionWithQuestions_ThrowsTypeMismatch() {
+        loginAs(UserRole.INSTRUCTOR);
         when(courseService.getLessonOrThrow(lessonId)).thenReturn(lesson());
         when(courseService.isLessonOwnedByInstructor(lessonId, instructorId)).thenReturn(true);
 
@@ -140,7 +189,7 @@ class AssignmentServiceTest {
                 "Essay", AssignmentType.FILE_SUBMISSION, "Upload your essay", null, null, List.of(question));
 
         ApiException exception = assertThrows(ApiException.class,
-                () -> assignmentService.createAssignment(lessonId, instructorId, request));
+                () -> assignmentService.createAssignment(lessonId, request));
 
         assertEquals(ErrorCode.ASSIGNMENT_TYPE_MISMATCH, exception.getErrorCode());
         verify(assignmentRepository, never()).save(any(Assignment.class));
@@ -148,6 +197,7 @@ class AssignmentServiceTest {
 
     @Test
     void createAssignment_NotOwner_ThrowsForbidden() {
+        loginAs(UserRole.INSTRUCTOR);
         when(courseService.getLessonOrThrow(lessonId)).thenReturn(lesson());
         when(courseService.isLessonOwnedByInstructor(lessonId, instructorId)).thenReturn(false);
 
@@ -155,18 +205,33 @@ class AssignmentServiceTest {
                 new CreateQuizOptionRequest("A", true), new CreateQuizOptionRequest("B", false)));
 
         ApiException exception = assertThrows(ApiException.class,
-                () -> assignmentService.createAssignment(lessonId, instructorId, request));
+                () -> assignmentService.createAssignment(lessonId, request));
 
         assertEquals(ErrorCode.FORBIDDEN, exception.getErrorCode());
         verify(assignmentRepository, never()).save(any(Assignment.class));
     }
 
     @Test
+    void createAssignment_Learner_ThrowsForbiddenBeforeAnyLookup() {
+        loginAs(UserRole.LEARNER);
+
+        CreateAssignmentRequest request = quizRequest(null, List.of(
+                new CreateQuizOptionRequest("A", true), new CreateQuizOptionRequest("B", false)));
+
+        ApiException exception = assertThrows(ApiException.class,
+                () -> assignmentService.createAssignment(lessonId, request));
+
+        assertEquals(ErrorCode.FORBIDDEN, exception.getErrorCode());
+        verify(courseService, never()).getLessonOrThrow(any());
+        verify(assignmentRepository, never()).save(any(Assignment.class));
+    }
+
+    @Test
     void getQuizQuestions_Success_NeverExposesCorrectFlag() {
+        loginAs(UserRole.LEARNER);
         UUID assignmentId = UUID.randomUUID();
-        Assignment assignment = new Assignment();
-        assignment.setId(assignmentId);
-        assignment.setType(AssignmentType.QUIZ);
+        Assignment assignment = quizAssignment(assignmentId);
+        when(enrolmentService.isEnrolled(instructorId, courseId)).thenReturn(true);
 
         QuizQuestion question = new QuizQuestion();
         question.setId(UUID.randomUUID());
@@ -185,8 +250,8 @@ class AssignmentServiceTest {
         wrongOption.setContent("Wrong answer");
 
         when(assignmentRepository.findById(assignmentId)).thenReturn(Optional.of(assignment));
-        when(quizQuestionRepository.findByAssignmentId(assignmentId)).thenReturn(List.of(question));
-        when(quizOptionRepository.findByQuestionAssignmentId(assignmentId)).thenReturn(List.of(correctOption, wrongOption));
+        when(quizQuestionRepository.findByAssignmentIdOrderByIdAsc(assignmentId)).thenReturn(List.of(question));
+        when(quizOptionRepository.findByQuestionAssignmentIdOrderByIdAsc(assignmentId)).thenReturn(List.of(correctOption, wrongOption));
 
         List<QuizQuestionResponse> result = assignmentService.getQuizQuestions(assignmentId);
 
@@ -197,6 +262,53 @@ class AssignmentServiceTest {
         boolean exposesCorrectFlag = Arrays.stream(QuizOptionResponse.class.getRecordComponents())
                 .anyMatch(component -> component.getName().toLowerCase().contains("correct"));
         assertTrue(!exposesCorrectFlag, "QuizOptionResponse must not expose is_correct");
+    }
+
+    @Test
+    void getQuizQuestions_LearnerNotEnrolled_ThrowsNotEnrolled() {
+        loginAs(UserRole.LEARNER);
+        UUID assignmentId = UUID.randomUUID();
+        when(assignmentRepository.findById(assignmentId)).thenReturn(Optional.of(quizAssignment(assignmentId)));
+        when(enrolmentService.isEnrolled(instructorId, courseId)).thenReturn(false);
+
+        ApiException exception = assertThrows(ApiException.class, () -> assignmentService.getQuizQuestions(assignmentId));
+
+        assertEquals(ErrorCode.NOT_ENROLLED, exception.getErrorCode());
+        verify(quizQuestionRepository, never()).findByAssignmentIdOrderByIdAsc(any());
+    }
+
+    @Test
+    void getQuizQuestions_Instructor_ThrowsForbidden() {
+        loginAs(UserRole.INSTRUCTOR);
+        UUID assignmentId = UUID.randomUUID();
+        when(assignmentRepository.findById(assignmentId)).thenReturn(Optional.of(quizAssignment(assignmentId)));
+
+        ApiException exception = assertThrows(ApiException.class, () -> assignmentService.getQuizQuestions(assignmentId));
+
+        assertEquals(ErrorCode.FORBIDDEN, exception.getErrorCode());
+    }
+
+    @Test
+    void getAssignmentsByLesson_LearnerNotEnrolled_ThrowsNotEnrolled() {
+        loginAs(UserRole.LEARNER);
+        when(courseService.getLessonOrThrow(lessonId)).thenReturn(lesson());
+        when(enrolmentService.isEnrolled(instructorId, courseId)).thenReturn(false);
+
+        ApiException exception = assertThrows(ApiException.class, () -> assignmentService.getAssignmentsByLesson(lessonId));
+
+        assertEquals(ErrorCode.NOT_ENROLLED, exception.getErrorCode());
+        verify(assignmentRepository, never()).findByLessonIdOrderByCreatedAtAsc(any());
+    }
+
+    @Test
+    void getAssignmentsByLesson_OtherInstructor_ThrowsForbidden() {
+        loginAs(UserRole.INSTRUCTOR);
+        when(courseService.getLessonOrThrow(lessonId)).thenReturn(lesson());
+        when(courseService.isLessonOwnedByInstructor(lessonId, instructorId)).thenReturn(false);
+
+        ApiException exception = assertThrows(ApiException.class, () -> assignmentService.getAssignmentsByLesson(lessonId));
+
+        assertEquals(ErrorCode.FORBIDDEN, exception.getErrorCode());
     }
 
     @Test

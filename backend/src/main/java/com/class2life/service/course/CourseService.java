@@ -227,9 +227,11 @@ public class CourseService {
                 .orElseThrow(() -> new ApiException(ErrorCode.LESSON_NOT_FOUND, "Lesson not found"));
     }
 
-    // TODO: return true only when the lesson's course belongs to this instructor, once the Leader
-    // provides the logged-in user from the SecurityContext and Course.instructor is always set.
+    // True only when the lesson's course belongs to this instructor (was a stub that always returned true)
+    @Transactional(readOnly = true)
     public boolean isLessonOwnedByInstructor(UUID lessonId, UUID instructorId) {
-        return true;
+        Course course = getLessonOrThrow(lessonId).getCourse();
+        return course != null && course.getInstructor() != null
+                && course.getInstructor().getId().equals(instructorId);
     }
 }

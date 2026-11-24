@@ -3,6 +3,7 @@ package com.class2life.security;
 import com.class2life.exception.ApiException;
 import com.class2life.exception.ErrorCode;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,6 +31,9 @@ public class JwtAuthenticationFiller extends OncePerRequestFilter {
     // Install identity, build the Authentication holding the email and ROLE_<role>, and put it in SecurityContextHolder.
     private final JwtService jwtService;
 
+    // Request attribute set when the Bearer token was well-formed but expired; read by SecurityConfig's entry point
+    public static final String TOKEN_EXPIRED_ATTRIBUTE = "class2life.jwt.expired";
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // Read Authorization: Bearer <token>, strip the bearer substr to get the actual token
@@ -42,6 +46,11 @@ public class JwtAuthenticationFiller extends OncePerRequestFilter {
         Claims tokenClaims;
         try {
             tokenClaims = jwtService.parseToken(token);
+        } catch (ExpiredJwtException e) {
+            // Mark the request so the 401 entry point answers TOKEN_EXPIRED (the FE then calls /api/auth/refresh)
+            request.setAttribute(TOKEN_EXPIRED_ATTRIBUTE, Boolean.TRUE);
+            filterChain.doFilter(request, response);
+            return;
         } catch (JwtException | IllegalArgumentException e) {
             filterChain.doFilter(request, response);
             return;

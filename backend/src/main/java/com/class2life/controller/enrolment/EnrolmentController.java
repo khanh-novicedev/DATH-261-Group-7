@@ -1,17 +1,20 @@
 package com.class2life.controller.enrolment;
 
 import com.class2life.common.ApiResponse;
+import com.class2life.common.PageResponse;
 import com.class2life.dto.enrolment.CourseMetricsResponse;
 import com.class2life.dto.enrolment.CourseProgressResponse;
 import com.class2life.dto.enrolment.EnrolmentResponse;
 import com.class2life.dto.enrolment.UpdateLessonProgressRequest;
+import com.class2life.entity.enrolment.CompletionStatus;
 import com.class2life.service.enrolment.EnrolmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -34,10 +37,12 @@ public class EnrolmentController {
         return new ApiResponse<>(true, "Enrolment removed", (Void) null);
     }
 
-    // API-21 (pagination is a follow-up)
+    // API-21: paged, optional ?status=IN_PROGRESS|COMPLETED
     @GetMapping("/enrolments")
-    public ApiResponse<List<EnrolmentResponse>> enrolmentList() {
-        return new ApiResponse<>(true, "Enrolments retrieved", enrolmentService.myEnrolments());
+    public ApiResponse<PageResponse<EnrolmentResponse>> enrolmentList(
+            @RequestParam(required = false) CompletionStatus status,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return new ApiResponse<>(true, "Enrolments retrieved", enrolmentService.myEnrolments(status, pageable));
     }
 
     // API-22
@@ -58,9 +63,11 @@ public class EnrolmentController {
         return new ApiResponse<>(true, "Progress retrieved", enrolmentService.getProgress(courseId, userId));
     }
 
-    // API-24 (pagination and the courseId filter are follow-ups)
+    // API-24: paged, optional ?courseId
     @GetMapping("/metrics/courses")
-    public ApiResponse<List<CourseMetricsResponse>> courseMetrics() {
-        return new ApiResponse<>(true, "Course metrics retrieved", enrolmentService.courseMetrics());
+    public ApiResponse<PageResponse<CourseMetricsResponse>> courseMetrics(
+            @RequestParam(required = false) UUID courseId,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return new ApiResponse<>(true, "Course metrics retrieved", enrolmentService.courseMetrics(courseId, pageable));
     }
 }

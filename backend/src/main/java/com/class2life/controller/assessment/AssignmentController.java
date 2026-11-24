@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -30,16 +29,13 @@ public class AssignmentController {
     }
 
     // API: POST /api/lessons/{lessonId}/assignments
-    // Role: INSTRUCTOR (own courses only)
-    // TODO: remove the instructorId request parameter and read the logged-in user from the
-    // SecurityContext once the Leader finishes SecurityConfig; add the role rule at the same time
+    // Role: INSTRUCTOR (own courses only). The instructor is read from the JWT in the service.
     @PostMapping("/lessons/{lessonId}/assignments")
     public ResponseEntity<ApiResponse<AssignmentResponse>> createAssignment(
             @PathVariable UUID lessonId,
-            @RequestParam UUID instructorId,
             @Valid @RequestBody CreateAssignmentRequest request
     ) {
-        AssignmentResponse response = assignmentService.createAssignment(lessonId, instructorId, request);
+        AssignmentResponse response = assignmentService.createAssignment(lessonId, request);
         return new ResponseEntity<>(
                 new ApiResponse<>(true, "Assignment created successfully", response), HttpStatus.CREATED);
     }

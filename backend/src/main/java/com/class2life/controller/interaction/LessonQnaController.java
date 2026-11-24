@@ -1,11 +1,15 @@
 package com.class2life.controller.interaction;
 
 import com.class2life.common.ApiResponse;
+import com.class2life.common.PageResponse;
 import com.class2life.dto.interaction.QnaRequest;
 import com.class2life.dto.interaction.QnaResponse;
+import com.class2life.dto.interaction.QnaThreadResponse;
 import com.class2life.service.interaction.LessonQnaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +22,9 @@ public class LessonQnaController {
     private final LessonQnaService qnaService;
 
     @GetMapping("/api/lessons/{lessonId}/qna")
-    public ResponseEntity<ApiResponse<List<QnaResponse>>> list(@PathVariable UUID lessonId) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Lesson Q&A retrieved", qnaService.list(lessonId)));
+    public ResponseEntity<ApiResponse<PageResponse<QnaThreadResponse>>> list(@PathVariable UUID lessonId,
+                                                                             @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Lesson Q&A retrieved", qnaService.list(lessonId, pageable)));
     }
 
     @PostMapping("/api/lessons/{lessonId}/qna")
