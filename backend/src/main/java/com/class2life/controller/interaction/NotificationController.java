@@ -1,9 +1,12 @@
 package com.class2life.controller.interaction;
 
 import com.class2life.common.ApiResponse;
+import com.class2life.common.PageResponse;
 import com.class2life.dto.interaction.NotificationResponse;
 import com.class2life.service.interaction.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +21,8 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<NotificationResponse>>> getNotifications() {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Notifications retrieved", notificationService.getMyNotifications()));
+    public ResponseEntity<ApiResponse<PageResponse<NotificationResponse>>> getNotifications(@RequestParam(required = false) Boolean unread, @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Notifications retrieved", notificationService.getMyNotifications(unread, pageable)));
     }
 
     @PutMapping("/{notificationId}/read")

@@ -1,10 +1,14 @@
 package com.class2life.controller.interaction;
 
 import com.class2life.common.ApiResponse;
+import com.class2life.common.PageResponse;
 import com.class2life.dto.interaction.*;
+import com.class2life.entity.interaction.ReportStatus;
 import com.class2life.service.interaction.ReportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +28,10 @@ public class ReportController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ReportResponse>>> list() {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Reports retrieved", reportService.list()));
+    public ResponseEntity<ApiResponse<PageResponse<ReportResponse>>> list(
+            @RequestParam(required = false) ReportStatus status,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Reports retrieved", reportService.list(status, pageable)));
     }
 
     @PutMapping("/{reportId}/resolve")

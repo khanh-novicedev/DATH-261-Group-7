@@ -1,5 +1,6 @@
 package com.class2life.service.interaction;
 
+import com.class2life.common.PageResponse;
 import com.class2life.dto.interaction.NotificationResponse;
 import com.class2life.entity.interaction.Notification;
 import com.class2life.entity.interaction.NotificationType;
@@ -9,6 +10,9 @@ import com.class2life.exception.ErrorCode;
 import com.class2life.repository.interaction.NotificationRepository;
 import com.class2life.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,10 +40,11 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getMyNotifications() {
+    public PageResponse<NotificationResponse> getMyNotifications(Boolean unread , Pageable pageable) {
         User user = currentUser();
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
-                .stream().map(this::toResponse).toList();
+        Page<Notification> notificationsPage = Boolean.TRUE.equals(unread) ? notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(user.getId(), pageable)
+                                                                                         : notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId(), pageable);
+        return PageResponse.of(notificationsPage.map(this::toResponse));
     }
 
     @Transactional
