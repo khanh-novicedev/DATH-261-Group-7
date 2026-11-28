@@ -13,4 +13,10 @@ public interface ReportedContentRepository extends JpaRepository<ReportedContent
     @EntityGraph(attributePaths = "reporter")
     Page<ReportedContent> findByStatusOrderByCreatedAtAsc(ReportStatus status, Pageable pageable);
     List<ReportedContent> findAllByOrderByCreatedAtDesc();
+    // API-36: one open report per reporter per entity
+    boolean existsByReporterIdAndReportedEntityTypeAndReportedEntityIdAndStatus(
+            UUID reporterId, String reportedEntityType, UUID reportedEntityId, ReportStatus status);
+    // API-38: every open report on the same entity is closed together
+    List<ReportedContent> findByReportedEntityTypeAndReportedEntityIdAndStatus(
+            String reportedEntityType, UUID reportedEntityId, ReportStatus status);
 }

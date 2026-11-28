@@ -26,12 +26,13 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
     private final AdminAuditLogService adminAuditLogService;
-    private static final Set<String> ALLOWED_SORTS = Set.of("id", "fullname", "email", "role", "status", "createdat");
+    // Exact entity property names: the raw property goes to Spring Data, so the check must be case-sensitive.
+    private static final Set<String> ALLOWED_SORTS = Set.of("id", "fullName", "email", "role", "status", "createdAt");
 
     @Transactional(readOnly = true)
     public PageResponse<UserSummaryResponse> getUsers(UserFilter filter, Pageable pageable) {
         for (Sort.Order order : pageable.getSort()) {
-            if (!ALLOWED_SORTS.contains(order.getProperty().toLowerCase())){
+            if (!ALLOWED_SORTS.contains(order.getProperty())){
                 throw new ApiException(ErrorCode.INVALID_SORT_FIELD, "Sort field Invalid");
             }
         }

@@ -19,6 +19,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     // All submissions of one learner for one assignment, newest first (API-32, no paging)
     List<Submission> findByAssignmentIdAndUserIdOrderBySubmittedAtDesc(UUID assignmentId, UUID userId);
 
+    // API-26: assignments of one lesson that this learner has submitted at least once (one query per lesson)
+    @Query("SELECT DISTINCT s.assignment.id FROM Submission s " +
+           "WHERE s.user.id = :userId AND s.assignment.lesson.id = :lessonId")
+    List<UUID> findSubmittedAssignmentIds(@Param("userId") UUID userId, @Param("lessonId") UUID lessonId);
+
     // Instructor view: only the most recent submission of each learner for one assignment.
     // If two submissions of the same learner have exactly the same submittedAt, both are returned.
     @Query(value = "SELECT s FROM Submission s " +

@@ -3,6 +3,7 @@ package com.class2life.controller.assessment;
 import com.class2life.common.ApiResponse;
 import com.class2life.dto.assessment.AssignmentResponse;
 import com.class2life.dto.assessment.CreateAssignmentRequest;
+import com.class2life.dto.assessment.LessonAssignmentResponse;
 import com.class2life.dto.assessment.QuizQuestionResponse;
 import com.class2life.service.assessment.AssignmentService;
 import jakarta.validation.Valid;
@@ -42,8 +43,8 @@ public class AssignmentController {
 
     // API: GET /api/lessons/{lessonId}/assignments
     @GetMapping("/lessons/{lessonId}/assignments")
-    public ResponseEntity<ApiResponse<List<AssignmentResponse>>> getAssignmentsByLesson(@PathVariable UUID lessonId) {
-        List<AssignmentResponse> response = assignmentService.getAssignmentsByLesson(lessonId);
+    public ResponseEntity<ApiResponse<List<LessonAssignmentResponse>>> getAssignmentsByLesson(@PathVariable UUID lessonId) {
+        List<LessonAssignmentResponse> response = assignmentService.getAssignmentsByLesson(lessonId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Assignments retrieved successfully", response));
     }
 

@@ -26,8 +26,10 @@ import com.class2life.exception.ApiException;
 import com.class2life.exception.ErrorCode;
 import com.class2life.mapper.AssignmentMapper;
 import com.class2life.repository.assessment.AssignmentRepository;
+import com.class2life.repository.assessment.QuizAttemptRepository;
 import com.class2life.repository.assessment.QuizOptionRepository;
 import com.class2life.repository.assessment.QuizQuestionRepository;
+import com.class2life.repository.assessment.SubmissionRepository;
 import com.class2life.repository.user.UserRepository;
 import com.class2life.entity.course.Course;
 import com.class2life.service.course.CourseService;
@@ -69,6 +71,12 @@ class AssignmentServiceTest {
     @Mock
     private EnrolmentService enrolmentService;
 
+    @Mock
+    private SubmissionRepository submissionRepository;
+
+    @Mock
+    private QuizAttemptRepository quizAttemptRepository;
+
     private AssignmentService assignmentService;
 
     private final UUID lessonId = UUID.randomUUID();
@@ -78,7 +86,8 @@ class AssignmentServiceTest {
     void setUp() {
         // The real mapper is used on purpose: it has no logic that needs mocking
         assignmentService = new AssignmentService(assignmentRepository, quizQuestionRepository,
-                quizOptionRepository, courseService, new AssignmentMapper(), userRepository, enrolmentService);
+                quizOptionRepository, courseService, new AssignmentMapper(), userRepository, enrolmentService,
+                submissionRepository, quizAttemptRepository);
     }
 
     @AfterEach

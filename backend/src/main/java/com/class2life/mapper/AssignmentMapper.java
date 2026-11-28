@@ -1,6 +1,7 @@
 package com.class2life.mapper;
 
 import com.class2life.dto.assessment.AssignmentResponse;
+import com.class2life.dto.assessment.LessonAssignmentResponse;
 import com.class2life.dto.assessment.QuizOptionResponse;
 import com.class2life.dto.assessment.QuizQuestionResponse;
 import com.class2life.entity.assessment.Assignment;
@@ -28,6 +29,17 @@ public class AssignmentMapper {
                 assignment.getDeadline(),
                 assignment.getCreatedAt(),
                 assignment.getUpdatedAt()
+        );
+    }
+
+    public LessonAssignmentResponse toLessonAssignmentResponse(Assignment assignment, Boolean submitted) {
+        return new LessonAssignmentResponse(
+                assignment.getId(),
+                assignment.getTitle(),
+                assignment.getType(),
+                assignment.getDeadline(),
+                assignment.getPassScore(),
+                submitted
         );
     }
 

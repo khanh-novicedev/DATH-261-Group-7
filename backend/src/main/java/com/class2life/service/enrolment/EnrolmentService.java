@@ -119,17 +119,10 @@ public class EnrolmentService {
     }
 
     @Transactional(readOnly = true)
-    public CourseProgressResponse getProgress(UUID courseId, UUID requestedUserId) {
-        User actor = currentUser();
-        UUID learnerId = requestedUserId == null ? actor.getId() : requestedUserId;
-        Enrolment enrolment = enrolmentRepository.findByUserIdAndCourseId(learnerId, courseId)
+    public CourseProgressResponse getProgress(UUID courseId) {
+        User user = currentUser();
+        Enrolment enrolment = enrolmentRepository.findByUserIdAndCourseId(user.getId(), courseId)
                 .orElseThrow(() -> new ApiException(ErrorCode.ENROLMENT_NOT_FOUND));
-        if (!actor.getId().equals(learnerId)) {
-            Course course = enrolment.getCourse();
-            boolean allowed = actor.getRole() == UserRole.ADMIN ||
-                    (actor.getRole() == UserRole.INSTRUCTOR && course.getInstructor().getId().equals(actor.getId()));
-            if (!allowed) throw new ApiException(ErrorCode.FORBIDDEN);
-        }
         return progressFor(enrolment, lessonRepository.findByCourseIdOrderBySequenceNumberAsc(courseId));
     }
 

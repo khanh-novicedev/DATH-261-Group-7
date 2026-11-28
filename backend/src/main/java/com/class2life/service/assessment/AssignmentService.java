@@ -4,6 +4,7 @@ import com.class2life.dto.assessment.AssignmentResponse;
 import com.class2life.dto.assessment.CreateAssignmentRequest;
 import com.class2life.dto.assessment.CreateQuizOptionRequest;
 import com.class2life.dto.assessment.CreateQuizQuestionRequest;
+import com.class2life.dto.assessment.LessonAssignmentResponse;
 import com.class2life.dto.assessment.QuizQuestionResponse;
 import com.class2life.entity.assessment.Assignment;
 import com.class2life.entity.assessment.AssignmentType;
@@ -16,8 +17,10 @@ import com.class2life.exception.ApiException;
 import com.class2life.exception.ErrorCode;
 import com.class2life.mapper.AssignmentMapper;
 import com.class2life.repository.assessment.AssignmentRepository;
+import com.class2life.repository.assessment.QuizAttemptRepository;
 import com.class2life.repository.assessment.QuizOptionRepository;
 import com.class2life.repository.assessment.QuizQuestionRepository;
+import com.class2life.repository.assessment.SubmissionRepository;
 import com.class2life.repository.user.UserRepository;
 import com.class2life.service.course.CourseService;
 import com.class2life.service.enrolment.EnrolmentService;
@@ -27,7 +30,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -42,6 +47,8 @@ public class AssignmentService {
     private final AssignmentMapper assignmentMapper;
     private final UserRepository userRepository;
     private final EnrolmentService enrolmentService;
+    private final SubmissionRepository submissionRepository;
+    private final QuizAttemptRepository quizAttemptRepository;
 
     public AssignmentService(AssignmentRepository assignmentRepository,
                              QuizQuestionRepository quizQuestionRepository,
@@ -49,7 +56,11 @@ public class AssignmentService {
                              CourseService courseService,
                              AssignmentMapper assignmentMapper,
                              UserRepository userRepository,
-                             EnrolmentService enrolmentService) {
+                             EnrolmentService enrolmentService,
+                             SubmissionRepository submissionRepository,
+                             QuizAttemptRepository quizAttemptRepository) {
+        this.submissionRepository = submissionRepository;
+        this.quizAttemptRepository = quizAttemptRepository;
         this.assignmentRepository = assignmentRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.quizOptionRepository = quizOptionRepository;
@@ -94,7 +105,7 @@ public class AssignmentService {
 
     // API-26: enrolled learners, the course owner and admins
     @Transactional(readOnly = true)
-    public List<AssignmentResponse> getAssignmentsByLesson(UUID lessonId) {
+    public List<LessonAssignmentResponse> getAssignmentsByLesson(UUID lessonId) {
         User user = currentUser();
         // Fails with 404 when the lesson does not exist
         Lesson lesson = courseService.getLessonOrThrow(lessonId);
@@ -110,8 +121,16 @@ public class AssignmentService {
             default -> throw new ApiException(ErrorCode.FORBIDDEN);
         }
 
-        return assignmentRepository.findByLessonIdOrderByCreatedAtAsc(lessonId).stream()
-                .map(assignmentMapper::toAssignmentResponse)
+        List<Assignment> assignments = assignmentRepository.findByLessonIdOrderByCreatedAtAsc(lessonId);
+        if (user.getRole() != UserRole.LEARNER) {
+            // submitted only describes a learner's own work; instructors/admins get null
+            return assignments.stream().map(a -> assignmentMapper.toLessonAssignmentResponse(a, null)).toList();
+        }
+        // Two queries for the whole lesson instead of one per assignment
+        Set<UUID> done = new HashSet<>(submissionRepository.findSubmittedAssignmentIds(user.getId(), lessonId));
+        done.addAll(quizAttemptRepository.findAttemptedAssignmentIds(user.getId(), lessonId));
+        return assignments.stream()
+                .map(a -> assignmentMapper.toLessonAssignmentResponse(a, done.contains(a.getId())))
                 .toList();
     }
 

@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/courses", "/api/courses/**").hasAnyRole("ADMIN", "INSTRUCTOR") // Create course
                         .requestMatchers(HttpMethod.PATCH, "/api/courses/**").hasAnyRole("ADMIN", "INSTRUCTOR") // Publish/status
                         .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasAnyRole("ADMIN", "INSTRUCTOR") // Delete
+                        .requestMatchers(HttpMethod.GET, "/api/courses/*/progress").hasRole("LEARNER") // API-23 own progress; must sit above the GET /api/courses/** rule
                         .requestMatchers(HttpMethod.GET, "/api/courses/**").authenticated()
                         .requestMatchers("/api/enrolments", "/api/enrolments/**").hasRole("LEARNER")
                         .requestMatchers("/ws/**").permitAll()

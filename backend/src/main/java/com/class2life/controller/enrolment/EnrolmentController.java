@@ -55,12 +55,10 @@ public class EnrolmentController {
                 enrolmentService.updateProgress(courseId, lessonId, request.isCompleted()));
     }
 
-    // API-23
+    // API-23: learner-only, own progress
     @GetMapping("/courses/{courseId}/progress")
-    public ApiResponse<CourseProgressResponse> getProgress(
-            @PathVariable UUID courseId,
-            @RequestParam(required = false) UUID userId) {
-        return new ApiResponse<>(true, "Progress retrieved", enrolmentService.getProgress(courseId, userId));
+    public ApiResponse<CourseProgressResponse> getProgress(@PathVariable UUID courseId) {
+        return new ApiResponse<>(true, "Progress retrieved", enrolmentService.getProgress(courseId));
     }
 
     // API-24: paged, optional ?courseId
