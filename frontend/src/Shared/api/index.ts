@@ -1,5 +1,5 @@
 export { apiClient, ApiError, errorMessage, unwrap } from "./client";
-export { getLessonQna, askQuestion } from "./qnaApi";
+export { getLessonQna, askQuestion, replyQuestion } from "./qnaApi";
 export {
   reportContent,
   type ReportInput,

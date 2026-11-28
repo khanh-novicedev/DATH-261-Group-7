@@ -9,7 +9,11 @@ interface QnaReportViewProps {
   items: QnaReportItem[];
   currentUser: string;
   onToggleStatus: (itemId: string) => void;
-  onReply: (itemId: string, message: string, file: File | null) => void;
+  onReply: (
+    itemId: string,
+    message: string,
+    file: File | null,
+  ) => Promise<void> | void;
 }
 
 type KindFilter = "all" | QnaItemKind;
@@ -35,6 +39,8 @@ export function QnaReportView({
   const [search, setSearch] = useState("");
   const [replyText, setReplyText] = useState("");
   const [replyFile, setReplyFile] = useState<File | null>(null);
+  const [replyError, setReplyError] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
 
   const query = search.trim().toLowerCase();
 
@@ -66,14 +72,23 @@ export function QnaReportView({
     (item) => item.status === "unresolved",
   ).length;
 
-  const handleReply = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleReply = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!selectedItem || !replyText.trim() || isSendingReply) return;
 
-    if (!selectedItem || !replyText.trim()) return;
-
-    onReply(selectedItem.id, replyText.trim(), replyFile);
-    setReplyText("");
-    setReplyFile(null);
+    try {
+      setReplyError("");
+      setIsSendingReply(true);
+      await onReply(selectedItem.id, replyText.trim(), replyFile);
+      setReplyText("");
+      setReplyFile(null);
+    } catch (err: unknown) {
+      setReplyError(
+        err instanceof Error ? err.message : "Failed to post reply.",
+      );
+    } finally {
+      setIsSendingReply(false);
+    }
   };
 
   const authorLabel = (item: QnaReportItem) =>
@@ -83,6 +98,7 @@ export function QnaReportView({
     setSelectedId(item.id);
     setReplyText("");
     setReplyFile(null);
+    setReplyError("");
   };
 
   return (
@@ -301,14 +317,22 @@ export function QnaReportView({
                   onChange={(event) => setReplyText(event.target.value)}
                   placeholder="Write a response..."
                   rows={3}
+                  disabled={isSendingReply}
                   required
                 />
+
+                {replyError && (
+                  <p className="td-course-action-error" role="alert">
+                    {replyError}
+                  </p>
+                )}
 
                 <div className="td-qna-reply-form__actions">
                   <label className="td-lesson-add-file">
                     {replyFile ? "Change file" : "+ Add file"}
                     <input
                       type="file"
+                      disabled={isSendingReply}
                       onChange={(event) =>
                         setReplyFile(event.currentTarget.files?.[0] ?? null)
                       }
@@ -324,9 +348,9 @@ export function QnaReportView({
                   <button
                     type="submit"
                     className="td-btn td-btn--primary"
-                    disabled={!replyText.trim()}
+                    disabled={!replyText.trim() || isSendingReply}
                   >
-                    Send reply
+                    {isSendingReply ? "Sending..." : "Send reply"}
                   </button>
                 </div>
 

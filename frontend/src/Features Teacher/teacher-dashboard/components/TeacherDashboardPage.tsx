@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { errorMessage } from "@shared/api";
+import { errorMessage, getLessonQna, replyQuestion } from "@shared/api";
 import type { AssignmentDto } from "@shared/api";
 import { useAuth } from "@shared/context";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -114,6 +114,9 @@ function getPathFromView(view: View): string {
 }
 
 const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function TeacherDashboardPage() {
   const navigate = useNavigate();
@@ -409,14 +412,100 @@ export function TeacherDashboardPage() {
 
   const [qaItems, setQaItems] = useState<QnaReportItem[]>(MOCK_QA_REPORTS);
 
-  const handleQnaReply = (
+  // Chỉ nạp Q&A thật khi đang mở trang Q&A / Report
+  useEffect(() => {
+    if (view.name !== "qa-reports") return;
+
+    const realLessons = courses.flatMap((c) =>
+      c.lessons
+        .filter((l) => UUID_REGEX.test(l.id))
+        .map((l) => ({ course: c, lesson: l })),
+    );
+    if (realLessons.length === 0) return;
+
+    let active = true;
+    void Promise.all(
+      realLessons.map(async ({ course: c, lesson: l }) => {
+        try {
+          const threads = await getLessonQna(l.id);
+          return threads.map(
+            (t): QnaReportItem => ({
+              id: t.id,
+              kind: "question",
+              title:
+                t.content.length > 60
+                  ? `${t.content.slice(0, 60)}...`
+                  : t.content,
+              status: t.replies.length > 0 ? "resolved" : "unresolved",
+              author: t.author.fullName,
+              anonymous: false,
+              className: "All classes",
+              courseTitle: c.title,
+              lessonTitle: l.title,
+              content: t.content,
+              createdAt: t.createdAt,
+              replies: t.replies.map((r) => ({
+                id: r.id,
+                author: r.author.fullName,
+                message: r.content,
+                createdAt: r.createdAt,
+              })),
+            }),
+          );
+        } catch {
+          return [];
+        }
+      }),
+    ).then((nested) => {
+      if (!active) return;
+      const realItems = nested.flat();
+      if (realItems.length === 0) return;
+
+      setQaItems((previous) => {
+        const mockOnly = previous.filter((item) => !UUID_REGEX.test(item.id));
+        return [...realItems, ...mockOnly];
+      });
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [view.name, courses]);
+
+  // API-35: POST /api/qna/{qnaId}/replies (áp dụng cho Instructor)
+  const handleQnaReply = async (
     itemId: string,
     message: string,
     file: File | null,
   ) => {
+    if (UUID_REGEX.test(itemId)) {
+      const created = await replyQuestion(itemId, message);
+      const reply: QnaReply = {
+        id: created.id,
+        author: created.author.fullName || currentUserName,
+        message: created.content,
+        createdAt: created.createdAt,
+        fileName: file?.name,
+        fileUrl: file ? URL.createObjectURL(file) : undefined,
+      };
+
+      setQaItems((previous) =>
+        previous.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                status: "resolved",
+                replies: [...item.replies, reply],
+              }
+            : item,
+        ),
+      );
+      return;
+    }
+
     const reply: QnaReply = {
       id: makeId(),
-      author: MOCK_USER.name,
+      author: currentUserName,
       message,
       createdAt: new Date().toISOString(),
       fileName: file?.name,
@@ -473,15 +562,7 @@ export function TeacherDashboardPage() {
           onEditAnswer={handleEditAnswer}
           onDeleteAnswer={handleDeleteAnswer}
         />
-      ) : /*: view.name === "lesson" && course && selectedLesson ? (
-        <LessonDetailView
-          course={course}
-          lesson={selectedLesson}
-          onBack={() => setView({ name: "course", courseId: course.id })}
-          onGoToCourses={goToCourses}
-        />
-        ) */
-      view.name === "lesson" && course && selectedLesson ? (
+      ) : view.name === "lesson" && course && selectedLesson ? (
         selectedAssignment || selectedLesson.type === "assignment" ? (
           <AssignmentDetailView
             course={course}
