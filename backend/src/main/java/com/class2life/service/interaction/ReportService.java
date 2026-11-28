@@ -39,6 +39,9 @@ public class ReportService {
     public ReportResponse create(CreateReportRequest request) {
         User actor = currentUser();
         ensureTargetExists(request.entityType(), request.entityId());
+        if (reportRepository.existsByReporterIdAndReportedEntityTypeAndReportedEntityIdAndStatus(
+                actor.getId(), request.entityType().name(), request.entityId(), ReportStatus.PENDING))
+            throw new ApiException(ErrorCode.ALREADY_REPORTED, "You already have a pending report on this content");
         ReportedContent report = new ReportedContent();
         report.setReporter(actor);
         report.setReportedEntityType(request.entityType().name());
@@ -70,9 +73,21 @@ public class ReportService {
             case WARN_USER -> warnReportedUser(report);
             case DISMISS -> { }
         }
-        report.setStatus(action == ReportAction.DISMISS ? ReportStatus.DISMISSED : ReportStatus.RESOLVED);
+        ReportStatus outcome = action == ReportAction.DISMISS ? ReportStatus.DISMISSED : ReportStatus.RESOLVED;
+        LocalDateTime now = LocalDateTime.now();
+        report.setStatus(outcome);
         report.setResolvedBy(actor);
-        report.setResolvedAt(LocalDateTime.now());
+        report.setResolvedAt(now);
+        // Other reporters' open reports on the same content get the same outcome, so none stay stuck as PENDING
+        List<ReportedContent> siblings = reportRepository.findByReportedEntityTypeAndReportedEntityIdAndStatus(
+                report.getReportedEntityType(), report.getReportedEntityId(), ReportStatus.PENDING);
+        for (ReportedContent sibling : siblings) {
+            if (sibling.getId().equals(report.getId())) continue;
+            sibling.setStatus(outcome);
+            sibling.setResolvedBy(actor);
+            sibling.setResolvedAt(now);
+        }
+        reportRepository.saveAll(siblings);
         // TODO (follow-up): request.note() is accepted but has no column to be stored in yet
         AdminAuditLog log = AdminAuditLog.builder().actor(actor)
                 .action("RESOLVE_REPORT:" + action.name()).entityType("reported_contents").entityId(report.getId()).build();
